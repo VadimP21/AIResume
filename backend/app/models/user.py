@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean
+from sqlalchemy import Boolean, text, Integer
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
@@ -19,7 +19,6 @@ class User(
         String(255),
         unique=True,
         nullable=False,
-        index=True,
     )
 
     hashed_password: Mapped[str] = mapped_column(
@@ -29,5 +28,11 @@ class User(
 
     is_active: Mapped[bool] = mapped_column(
         Boolean,
-        default=True,
+        server_default=text("true"),
+    )
+
+    token_version: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        server_default=text("1")
     )

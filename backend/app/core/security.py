@@ -1,0 +1,100 @@
+from datetime import datetime, timedelta, timezone
+from typing import Any
+from uuid import uuid4
+
+import jwt
+from fastapi import HTTPException
+from jose import ExpiredSignatureError, JWTError
+from passlib.context import CryptContext
+
+from app.core.config import settings
+
+pwd_context = CryptContext(
+    schemes=["argon2"],
+    argon2__memory_cost=65536,
+    argon2__time_cost=3,
+    argon2__parallelism=4,
+)
+
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+
+def verify_password(
+        plain_password: str,
+        hashed_password: str,
+) -> bool:
+    return pwd_context.verify(
+        plain_password,
+        hashed_password,
+    )
+
+
+def hash_token(token: str) -> str:
+    return pwd_context.hash(token)
+
+
+def create_access_token(
+        subject: str,
+        token_version: int,
+) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+    now = datetime.now(timezone.utc)
+    payload: dict[str, Any] = {
+        "sub": subject,
+        "exp": expire,
+        "iat": now,
+        "type": "access",
+        "iss": settings.JWT_ISSUER,
+        "aud": settings.JWT_AUDIENCE,
+        "tv": token_version,
+    }
+    return jwt.encode(
+        payload,
+        settings.JWT_SECRET,
+        algorithm=settings.JWT_ALGORITHM,
+    )
+
+
+def create_refresh_token(
+        subject: str,
+        token_version: int,
+) -> tuple[str, str]:
+    expire = datetime.now(timezone.utc) + timedelta(days=7)
+    now = datetime.now(timezone.utc)
+    jti = str(uuid4())
+    payload = {
+        "sub": subject,
+        "exp": expire,
+        "iat": now,
+        "type": "refresh",
+        "jti": jti,
+        "iss": settings.JWT_ISSUER,
+        "aud": settings.JWT_AUDIENCE,
+        "tv": token_version,
+    }
+    token = jwt.encode(
+        payload,
+        settings.JWT_SECRET,
+        algorithm=settings.JWT_ALGORITHM,
+    )
+    return token, jti
+
+
+def decode_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET,
+            algorithms=[settings.JWT_ALGORITHM],
+            issuer=settings.JWT_ISSUER,
+            audience=settings.JWT_AUDIENCE,
+        )
+    except ExpiredSignatureError:
+        raise HTTPException(401, "Token expired")
+    except JWTError:
+        raise HTTPException(401, "Invalid token")
+    return payload

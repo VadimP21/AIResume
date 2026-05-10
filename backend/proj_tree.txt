@@ -1,0 +1,30 @@
+backend/
+├── app/
+│   ├── api/
+│   │   ├── v1/
+│   │   │   ├── auth/
+│   │   │   ├── users/
+│   │   │   └── health/
+│   ├── core/
+│   ├── db/
+│   ├── models/
+│   ├── repositories/
+│   ├── services/
+│   ├── schemas/
+│   ├── tasks/
+│   ├── workers/
+│   ├── utils/
+│   └── main.py
+│
+├── alembic/
+├── tests/
+├── docker/
+├── scripts/
+│
+├── pyproject.toml
+├── .env
+├── .env.example
+├── alembic.ini
+├── Dockerfile
+├── docker-compose.yml
+└── Makefile

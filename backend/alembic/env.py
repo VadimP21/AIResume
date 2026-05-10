@@ -5,6 +5,7 @@ from alembic import context
 
 from app.core.config import settings
 from app.db.base import Base
+from app.db import models
 
 config = context.config
 
@@ -16,7 +17,7 @@ target_metadata = Base.metadata
 
 def run_migrations_offline():
     context.configure(
-        url=settings.DATABASE_URL,
+        url=str(settings.DATABASE_URL),
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -28,7 +29,7 @@ def run_migrations_offline():
 
 def run_migrations_online():
     connectable = create_engine(
-        settings.DATABASE_URL,
+        str(settings.DATABASE_URL),
         pool_pre_ping=True,
     )
 
