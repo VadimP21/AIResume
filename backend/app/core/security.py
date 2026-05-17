@@ -4,8 +4,9 @@ from uuid import uuid4
 
 import jwt
 from fastapi import HTTPException
-from jose import ExpiredSignatureError, JWTError
+from jwt import ExpiredSignatureError, InvalidTokenError
 from passlib.context import CryptContext
+from starlette import status
 
 from app.core.config import settings
 
@@ -30,10 +31,8 @@ def verify_password(
         hashed_password,
     )
 
-
 def hash_token(token: str) -> str:
     return pwd_context.hash(token)
-
 
 def create_access_token(
         subject: str,
@@ -84,7 +83,7 @@ def create_refresh_token(
     return token, jti
 
 
-def decode_token(token: str) -> dict:
+def decode_token(token: str) -> dict[str, Any]:
     try:
         payload = jwt.decode(
             token,
@@ -94,7 +93,11 @@ def decode_token(token: str) -> dict:
             audience=settings.JWT_AUDIENCE,
         )
     except ExpiredSignatureError:
-        raise HTTPException(401, "Token expired")
-    except JWTError:
-        raise HTTPException(401, "Invalid token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token expired")
+    except InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token")
     return payload

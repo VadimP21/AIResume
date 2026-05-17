@@ -37,15 +37,17 @@ async def get_current_user(
 
     repo = UserRepository(session)
     user = await repo.get_by_id(UUID(user_id))
-    if payload.get("tv") != user.token_version:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token revoked",
-        )
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
+        )
+
+    if payload.get("tv") != user.token_version:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token revoked",
         )
 
     if not user.is_active:

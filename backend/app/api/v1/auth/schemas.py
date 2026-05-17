@@ -33,7 +33,13 @@ class RegisterRequest(BaseModel):
             raise ValueError(
                 "Password must contain digit"
             )
-
+        if not re.search(
+                r"[!@#$%^&*()_\-+=<>?/{}[\]|]",
+                value,
+        ):
+            raise ValueError(
+                "Password must contain special character"
+            )
         return value
 
 class LoginRequest(BaseModel):

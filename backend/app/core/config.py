@@ -69,10 +69,11 @@ class Settings(BaseSettings):
     # =========================================================
 
     JWT_SECRET: str
-    JWT_ALGORITHM: str = "RS256"
+    JWT_ALGORITHM: str = "HS256"
 
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    REFRESH_TOKEN_EXPIRE_SECONDS: int = 604800
     JWT_ISSUER: str = "airesume-api"
     JWT_AUDIENCE: str = "airesume-client"
     # =========================================================

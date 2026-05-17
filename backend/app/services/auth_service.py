@@ -1,9 +1,12 @@
+from uuid import UUID
+
 from fastapi import HTTPException, status
 from jose import JWTError
 from redis.asyncio import Redis
 from sqlalchemy.exc import IntegrityError
 
 from app.api.v1.auth.schemas import RefreshRequest
+from app.core.config import settings
 from app.core.security import (
     hash_password,
     verify_password,
@@ -29,7 +32,6 @@ class AuthService:
     ):
         try:
             email = email.lower().strip()
-            print(self.user_repo.session)
             user = await self.user_repo.create(
                 email=email,
                 hashed_password=hash_password(password),
@@ -58,12 +60,14 @@ class AuthService:
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid credentials, user not existing",
+                detail="Invalid credentials",
             )
 
         if not user.is_active:
-            raise HTTPException(403)
-
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User not active",
+            )
         if not verify_password(
             password,
             user.hashed_password,
@@ -72,7 +76,6 @@ class AuthService:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid credentials",
             )
-
 
         access_token = create_access_token(
             str(user.id),
@@ -89,7 +92,7 @@ class AuthService:
         await self.redis.set(
             f"refresh:{user.id}:{jti}",
             hashed_refresh,
-            ex=60 * 60 * 24 * 7,
+            ex=settings.REFRESH_TOKEN_EXPIRE_SECONDS,
         )
 
         return {
@@ -103,21 +106,32 @@ class AuthService:
     ):
         payload = decode_token(payload.refresh_token)
         user_id = payload["sub"]
-        user = await self.user_repo.get_by_id(user_id)
+        user = await self.user_repo.get_by_id(UUID(user_id))
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User not found",
             )
+        if payload["tv"] != user.token_version:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token revoked",
+            )
 
         if payload["type"] != "refresh":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token, type not 'refresh'",
+                detail="Invalid token",
+            )
+
+        token_version = payload["tv"]
+        if token_version != user.token_version:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token",
             )
 
         jti = payload["jti"]
-
         deleted = await self.redis.delete(
             f"refresh:{user_id}:{jti}"
         )
@@ -149,7 +163,7 @@ class AuthService:
         user_id = payload["sub"]
         jti = payload["jti"]
 
-        stored_hash = await self.redis.get(
+        stored_hash: str|None = await self.redis.get(
             f"refresh:{user_id}:{jti}"
         )
 
@@ -161,18 +175,34 @@ class AuthService:
 
         if not verify_password(
             payload_data.refresh_token,
-            stored_hash.decode(),
+            stored_hash,
         ):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token",
             )
+        user = await self.user_repo.get_by_id(
+            UUID(user_id)
+        )
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+            )
+        if payload["tv"] != user.token_version:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token revoked",
+            )
 
-        token_version = payload["tv"]
-        access_token = create_access_token(user_id, token_version)
+        access_token = create_access_token(
+            user_id,
+            user.token_version,
+        )
 
         new_refresh_token, new_jti = create_refresh_token(
-            user_id, token_version
+            user_id,
+            user.token_version,
         )
 
         await self.redis.delete(f"refresh:{user_id}:{jti}")
@@ -180,7 +210,7 @@ class AuthService:
         await self.redis.set(
             f"refresh:{user_id}:{new_jti}",
             hash_token(new_refresh_token),
-            ex=60 * 60 * 24 * 7,
+            ex=settings.REFRESH_TOKEN_EXPIRE_SECONDS,
         )
 
         return {
