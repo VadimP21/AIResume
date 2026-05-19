@@ -19,6 +19,12 @@ pwd_context = CryptContext(
 
 
 def hash_password(password: str) -> str:
+    """
+        Хеширует пароль пользователя с использованием Argon2.
+
+        Используется перед сохранением пароля в базе данных.
+        Открытый пароль никогда не должен храниться в БД.
+        """
     return pwd_context.hash(password)
 
 
@@ -26,18 +32,37 @@ def verify_password(
         plain_password: str,
         hashed_password: str,
 ) -> bool:
+    """
+        Проверяет соответствие пароля и его хеша.
+
+        Используется при аутентификации пользователя.
+        """
     return pwd_context.verify(
         plain_password,
         hashed_password,
     )
 
+
 def hash_token(token: str) -> str:
+    """
+       Хеширует refresh token перед сохранением в Redis.
+
+       Позволяет не хранить токены в открытом виде.
+       """
     return pwd_context.hash(token)
+
 
 def create_access_token(
         subject: str,
         token_version: int,
 ) -> str:
+    """
+        Создает JWT access token.
+
+        Access token используется для доступа к защищенным endpoint API.
+        Токен содержит идентификатор пользователя, срок действия,
+        issuer, audience и версию токена.
+        """
     expire = datetime.now(timezone.utc) + timedelta(
         minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
     )
@@ -62,6 +87,15 @@ def create_refresh_token(
         subject: str,
         token_version: int,
 ) -> tuple[str, str]:
+    """
+        Создает JWT refresh token и его уникальный идентификатор.
+
+        Refresh token используется для получения новых access token
+        без повторной авторизации пользователя.
+
+        Возвращает:
+            tuple[token, jti]
+        """
     expire = datetime.now(timezone.utc) + timedelta(days=7)
     now = datetime.now(timezone.utc)
     jti = str(uuid4())
@@ -84,6 +118,17 @@ def create_refresh_token(
 
 
 def decode_token(token: str) -> dict[str, Any]:
+    """
+        Декодирует и валидирует JWT token.
+
+        Проверяет:
+        - подпись токена
+        - срок действия
+        - issuer
+        - audience
+
+        Вызывает HTTPException при невалидном или истекшем токене.
+        """
     try:
         payload = jwt.decode(
             token,
