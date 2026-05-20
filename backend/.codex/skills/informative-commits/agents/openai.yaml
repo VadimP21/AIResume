@@ -1,0 +1,4 @@
+interface:
+  display_name: "Informative Commits"
+  short_description: "Create concise, accurate commit messages"
+  default_prompt: "Use $informative-commits to create an informative commit."

@@ -7,6 +7,9 @@ infra-down:
 run:
 	uvicorn app.main:app --reload
 
+run_loc:
+	uvicorn app.main_offline:app --reload
+
 worker:
 	celery -A app.tasks.worker worker -l info
 

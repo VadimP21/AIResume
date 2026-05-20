@@ -1,4 +1,4 @@
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import String, ForeignKey, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -11,6 +11,13 @@ class Resume(Base,
              TimestampMixin,
              ):
     __tablename__ = "resumes"
+    # __table_args__ = (
+    #     Index(
+    #         "ix_resumes_user_created",
+    #         "user_id",
+    #         "created_at",
+    #     )
+    # )
 
     user_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),

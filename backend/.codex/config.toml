@@ -1,0 +1,24 @@
+model = "gpt-5.6-terra"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+language = "ru"
+[features]
+voice_transcription = true
+[project]
+name = "AIResume Backend"
+stack = [
+    "FastAPI",
+    "SQLAlchemy",
+    "PostgreSQL",
+    "Redis",
+    "Celery"
+]
+
+[testing]
+command = "pytest"
+
+[linter]
+command = "ruff check ."
+
+[migrations]
+command = "alembic upgrade head"

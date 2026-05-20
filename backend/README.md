@@ -3,6 +3,13 @@
 
 Production-ready backend for AI-powered resume and cover letter generation platform.
 
+## Рабочие сценарии
+
+- [Разработка](docs/workflows/development.md)
+- [Тестирование](docs/workflows/testing.md)
+- [Миграции](docs/workflows/migrations.md)
+- [Code review](docs/workflows/code-review.md)
+
 Built with:
 - FastAPI
 - PostgreSQL
@@ -138,8 +145,11 @@ Create `.env`:
 
 ```env
 APP_NAME=AI Resume Builder
-APP_ENV=local
+APP_ENV=development
 DEBUG=true
+ENABLE_FAKE_AUTH=false
+FAKE_AUTH_EMAIL=
+FAKE_AUTH_PASSWORD=
 
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
@@ -156,6 +166,11 @@ JWT_EXPIRE_MINUTES=30
 
 CORS_ORIGINS=["http://localhost:3000"]
 ```
+
+`POST /api/v1/auth/fake_auth` регистрируется только при
+`APP_ENV=development|test` и `ENABLE_FAKE_AUTH=true`. При включении также
+обязательны `FAKE_AUTH_EMAIL` и `FAKE_AUTH_PASSWORD`. В staging и production
+включение endpoint запрещено конфигурацией.
 
 ---
 

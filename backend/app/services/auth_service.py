@@ -217,3 +217,24 @@ class AuthService:
             "access_token": access_token,
             "refresh_token": new_refresh_token,
         }
+
+    async def fake_auth(
+        self,
+        email: str,
+        password: str,
+    ):
+        if await self.user_repo.get_by_email(email):
+            return await self.login(
+                email,
+                password,
+            )
+
+        await self.register(
+            email,
+            password,
+        )
+
+        return await self.login(
+            email,
+            password,
+        )

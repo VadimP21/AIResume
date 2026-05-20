@@ -6,7 +6,7 @@ from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-from app.db.mixins import UUIDMixin
+from app.db.mixins import UUIDMixin, TimestampMixin
 
 
 class SectionType(str, Enum):
@@ -20,8 +20,17 @@ class SectionType(str, Enum):
 
 class ResumeSection(Base,
                     UUIDMixin,
+                    TimestampMixin,
                     ):
     __tablename__ = "resume_sections"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "resume_id",
+            "position",
+            name="uq_resume_position",
+        ),
+    )
 
     resume_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -30,18 +39,13 @@ class ResumeSection(Base,
         index=True,
     )
 
-    type: Mapped[SectionType] = mapped_column(
+    section_type: Mapped[SectionType] = mapped_column(
         SQLEnum(SectionType),
         nullable=False,
     )
 
     position: Mapped[int] = mapped_column(
         Integer,
-        UniqueConstraint(
-            "resume_id",
-            "position",
-            name="uq_resume_position",
-        ),
         nullable=False,
         default=0,
     )

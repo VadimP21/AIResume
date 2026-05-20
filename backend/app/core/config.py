@@ -1,8 +1,17 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import computed_field, model_validator, field_validator, RedisDsn, PostgresDsn
+from pydantic import (
+    EmailStr,
+    PostgresDsn,
+    RedisDsn,
+    SecretStr,
+    computed_field,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -20,11 +29,15 @@ class Settings(BaseSettings):
 
     APP_ENV: Literal[
         "development",
+        "test",
         "staging",
         "production",
     ] = "development"
 
     DEBUG: bool = False
+    ENABLE_FAKE_AUTH: bool = False
+    FAKE_AUTH_EMAIL: EmailStr | None = None
+    FAKE_AUTH_PASSWORD: SecretStr | None = None
 
     API_V1_PREFIX: str = "/api/v1"
 
@@ -32,11 +45,11 @@ class Settings(BaseSettings):
     BACKEND_PORT: int = 8000
 
     LOG_LEVEL: Literal[
-    "DEBUG",
-    "INFO",
-    "WARNING",
-    "ERROR",
-    "CRITICAL",
+        "DEBUG",
+        "INFO",
+        "WARNING",
+        "ERROR",
+        "CRITICAL",
     ] = "INFO"
 
     TIMEZONE: str = "UTC"
@@ -92,16 +105,42 @@ class Settings(BaseSettings):
     @classmethod
     def validate_jwt_secret(cls, value: str) -> str:
         if len(value) < 32:
-            raise ValueError(
-                "JWT_SECRET must contain at least 32 characters"
-            )
+            raise ValueError("JWT_SECRET must contain at least 32 characters")
         return value
 
     @model_validator(mode="after")
     def validate_environment(self):
         if self.APP_ENV == "production" and self.DEBUG:
             raise ValueError("DEBUG must be False in production")
+
+        if self.ENABLE_FAKE_AUTH:
+            if self.APP_ENV not in {"development", "test"}:
+                raise ValueError(
+                    "ENABLE_FAKE_AUTH is allowed only in development or test"
+                )
+            if self.FAKE_AUTH_EMAIL is None or self.FAKE_AUTH_PASSWORD is None:
+                raise ValueError(
+                    "FAKE_AUTH_EMAIL and FAKE_AUTH_PASSWORD are required "
+                    "when ENABLE_FAKE_AUTH is enabled"
+                )
+            if not self.FAKE_AUTH_PASSWORD.get_secret_value():
+                raise ValueError("FAKE_AUTH_PASSWORD must not be empty")
         return self
+
+    @property
+    def fake_auth_enabled(self) -> bool:
+        return self.ENABLE_FAKE_AUTH and self.APP_ENV in {"development", "test"}
+
+    def get_fake_auth_credentials(self) -> tuple[str, str]:
+        if (
+            not self.fake_auth_enabled
+            or self.FAKE_AUTH_EMAIL is None
+            or self.FAKE_AUTH_PASSWORD is None
+        ):
+            raise RuntimeError("Fake auth is not configured")
+
+        return str(self.FAKE_AUTH_EMAIL), self.FAKE_AUTH_PASSWORD.get_secret_value()
+
     # =========================================================
     # COMPUTED FIELDS
     # =========================================================
@@ -134,10 +173,7 @@ class Settings(BaseSettings):
     @property
     def REDIS_URL(self) -> RedisDsn:
         return RedisDsn(
-            f"redis://:"
-            f"{self.REDIS_PASSWORD}@"
-            f"{self.REDIS_HOST}:"
-            f"{self.REDIS_PORT}/0"
+            f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/0"
         )
 
 

@@ -223,3 +223,9 @@ __marimo__/
 
 /prompts_ds
 
+# codex
+
+.codex/auth/
+.codex/cache/
+.codex/logs/
+.codex/state/
