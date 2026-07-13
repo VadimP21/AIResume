@@ -1,26 +1,18 @@
-import os
 from uuid import uuid4
 
 import pytest
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.db.models import Resume, User
 from app.repositories.resume import ResumeRepository
 from app.services.resume import ResumeService
 
-TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
-
-pytestmark = pytest.mark.skipif(
-    not TEST_DATABASE_URL,
-    reason="TEST_DATABASE_URL is not configured",
-)
-
 
 @pytest.mark.asyncio
-async def test_deleted_resume_is_absent_in_new_session() -> None:
-    assert TEST_DATABASE_URL is not None
-    engine = create_async_engine(TEST_DATABASE_URL)
-    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+async def test_deleted_resume_is_absent_in_new_session(
+    test_session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    session_factory = test_session_factory
     user_id = None
 
     try:
@@ -60,4 +52,3 @@ async def test_deleted_resume_is_absent_in_new_session() -> None:
                 if user is not None:
                     await cleanup_session.delete(user)
                     await cleanup_session.commit()
-        await engine.dispose()

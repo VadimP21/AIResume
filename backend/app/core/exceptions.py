@@ -1,8 +1,7 @@
+import structlog
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette import status
-
-import structlog
 
 logger = structlog.get_logger()
 
@@ -11,8 +10,10 @@ class AppException(Exception):
     def __init__(self, message: str):
         self.message = message
 
+
 class NotFoundException(AppException):
     pass
+
 
 async def app_exception_handler(
     request: Request,

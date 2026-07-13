@@ -1,15 +1,20 @@
-from enum import Enum
+from enum import StrEnum
+from typing import TYPE_CHECKING
 
-from sqlalchemy import Integer, ForeignKey, Enum as SQLEnum, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Integer, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-from app.db.mixins import UUIDMixin, TimestampMixin
+from app.db.mixins import TimestampMixin, UUIDMixin
+
+if TYPE_CHECKING:
+    from app.models.resume import Resume
 
 
-class SectionType(str, Enum):
+class SectionType(StrEnum):
     SUMMARY = "summary"
     EXPERIENCE = "experience"
     EDUCATION = "education"
@@ -18,10 +23,11 @@ class SectionType(str, Enum):
     LANGUAGES = "languages"
 
 
-class ResumeSection(Base,
-                    UUIDMixin,
-                    TimestampMixin,
-                    ):
+class ResumeSection(
+    Base,
+    UUIDMixin,
+    TimestampMixin,
+):
     __tablename__ = "resume_sections"
 
     __table_args__ = (
@@ -55,6 +61,4 @@ class ResumeSection(Base,
         nullable=False,
     )
 
-    resume: Mapped["Resume"] = relationship(
-        back_populates="sections"
-    )
+    resume: Mapped["Resume"] = relationship(back_populates="sections")

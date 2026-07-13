@@ -12,9 +12,7 @@ class UserRepository:
         self,
         email: str,
     ) -> User | None:
-        stmt = select(User).where(
-            User.email == email
-        )
+        stmt = select(User).where(User.email == email)
 
         result = await self.db.execute(stmt)
 

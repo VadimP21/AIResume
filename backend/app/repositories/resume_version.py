@@ -7,14 +7,13 @@ from app.models.resume_version import ResumeVersion
 
 
 class ResumeVersionRepository:
-
     def __init__(self, session: AsyncSession):
         self.session = session
 
     async def create_version(
-            self,
-            resume_id: UUID,
-            snapshot: dict,
+        self,
+        resume_id: UUID,
+        snapshot: dict,
     ) -> ResumeVersion:
         version = ResumeVersion(
             resume_id=resume_id,
@@ -22,24 +21,18 @@ class ResumeVersionRepository:
         )
 
         self.session.add(version)
-
-        await self.session.commit()
-        await self.session.refresh(version)
+        await self.session.flush()
 
         return version
 
     async def list_versions(
-            self,
-            resume_id: UUID,
+        self,
+        resume_id: UUID,
     ) -> list[ResumeVersion]:
         query = (
             select(ResumeVersion)
-            .where(
-                ResumeVersion.resume_id == resume_id
-            )
-            .order_by(
-                ResumeVersion.created_at.desc()
-            )
+            .where(ResumeVersion.resume_id == resume_id)
+            .order_by(ResumeVersion.created_at.desc())
         )
 
         result = await self.session.execute(query)

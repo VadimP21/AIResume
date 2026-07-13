@@ -1,7 +1,7 @@
 # 007. Модель версий резюме отсутствует в миграциях и metadata
 
 - **Серьёзность:** Medium
-- **Статус:** Open
+- **Статус:** Resolved
 - **Затронутые файлы:** `app/models/resume_version.py:9-26`, `app/db/models.py:1-11`, `alembic/versions/2a4721afcc53_auth_resume.py:24-69`
 
 ## Описание

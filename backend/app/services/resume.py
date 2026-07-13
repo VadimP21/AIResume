@@ -1,25 +1,26 @@
 from uuid import UUID
 
+from app.core.exceptions import NotFoundException
 from app.repositories.resume import ResumeRepository
 from app.schemas.resume import (
     ResumeCreateSchema,
-    ResumeSectionCreateSchema, ResumeUpdateSchema, ResumeSectionUpdateSchema,
+    ResumeSectionCreateSchema,
+    ResumeSectionUpdateSchema,
+    ResumeUpdateSchema,
 )
-from app.core.exceptions import NotFoundException
 
 
 class ResumeService:
-
     def __init__(
-            self,
-            repository: ResumeRepository,
+        self,
+        repository: ResumeRepository,
     ):
         self.repository = repository
 
     async def create_resume(
-            self,
-            user_id: UUID,
-            data: ResumeCreateSchema,
+        self,
+        user_id: UUID,
+        data: ResumeCreateSchema,
     ):
         try:
             resume = await self.repository.create_resume(
@@ -30,8 +31,7 @@ class ResumeService:
 
             await self.repository.session.commit()
             return await self.repository.get_resume_with_sections(
-                user_id=user_id,
-                resume_id=resume_id
+                user_id=user_id, resume_id=resume_id
             )
 
         except Exception:
@@ -39,9 +39,9 @@ class ResumeService:
             raise
 
     async def get_resume(
-            self,
-            resume_id: UUID,
-            user_id: UUID,
+        self,
+        resume_id: UUID,
+        user_id: UUID,
     ):
 
         resume = await self.repository.get_resume_with_sections(
@@ -50,17 +50,15 @@ class ResumeService:
         )
 
         if not resume:
-            raise NotFoundException(
-                "Resume not found"
-            )
+            raise NotFoundException("Resume not found")
 
         return resume
 
     async def update_resume(
-            self,
-            resume_id: UUID,
-            user_id: UUID,
-            data: ResumeUpdateSchema,
+        self,
+        resume_id: UUID,
+        user_id: UUID,
+        data: ResumeUpdateSchema,
     ):
 
         resume = await self.repository.get_resume_base(
@@ -69,9 +67,7 @@ class ResumeService:
         )
 
         if not resume:
-            raise NotFoundException(
-                "Resume not found"
-            )
+            raise NotFoundException("Resume not found")
         try:
             resume = await self.repository.update_resume(
                 resume=resume,
@@ -88,10 +84,10 @@ class ResumeService:
             raise
 
     async def get_list_resumes(
-            self,
-            user_id: UUID,
-            limit: int,
-            offset: int,
+        self,
+        user_id: UUID,
+        limit: int,
+        offset: int,
     ):
 
         return await self.repository.list_resumes(
@@ -101,18 +97,16 @@ class ResumeService:
         )
 
     async def delete_resume(
-            self,
-            resume_id: UUID,
-            user_id: UUID,
+        self,
+        resume_id: UUID,
+        user_id: UUID,
     ):
         resume = await self.repository.get_resume_base(
             resume_id=resume_id,
             user_id=user_id,
         )
         if not resume:
-            raise NotFoundException(
-                "Resume not found"
-            )
+            raise NotFoundException("Resume not found")
 
         try:
             await self.repository.session.delete(resume)
@@ -123,24 +117,19 @@ class ResumeService:
             raise
 
     async def add_section(
-            self,
-            resume_id: UUID,
-            user_id: UUID,
-            data: ResumeSectionCreateSchema,
+        self,
+        resume_id: UUID,
+        user_id: UUID,
+        data: ResumeSectionCreateSchema,
     ):
         try:
-            # resume = await self.repository.lock_resume(
-            #     resume_id,
-            #     user_id,
-            # )
-            position = await self.repository.get_next_position_and_lock_resume(resume_id, user_id)
+            position = await self.repository.get_next_position_and_lock_resume(
+                resume_id,
+                user_id,
+            )
 
             if not position:
-                raise NotFoundException(
-                    "Resume not found"
-                )
-
-            # position = await self.repository.get_next_position(resume_id)
+                raise NotFoundException("Resume not found")
 
             section = await self.repository.add_section(
                 resume_id=resume_id,
@@ -158,10 +147,10 @@ class ResumeService:
             raise
 
     async def update_section(
-            self,
-            section_id: UUID,
-            user_id: UUID,
-            data: ResumeSectionUpdateSchema,
+        self,
+        section_id: UUID,
+        user_id: UUID,
+        data: ResumeSectionUpdateSchema,
     ):
 
         section = await self.repository.get_section(
@@ -170,9 +159,7 @@ class ResumeService:
         )
 
         if not section:
-            raise NotFoundException(
-                "Section not found"
-            )
+            raise NotFoundException("Section not found")
         try:
             section = await self.repository.update_section(
                 section,

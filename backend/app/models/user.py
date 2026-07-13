@@ -1,11 +1,8 @@
-from sqlalchemy import Boolean, text, Integer
-from sqlalchemy import String
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
+from sqlalchemy import Boolean, Integer, String, text
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
-from app.db.mixins import TimestampMixin
-from app.db.mixins import UUIDMixin
+from app.db.mixins import TimestampMixin, UUIDMixin
 
 
 class User(
@@ -32,7 +29,5 @@ class User(
     )
 
     token_version: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-        server_default=text("1")
+        Integer, nullable=False, server_default=text("1")
     )

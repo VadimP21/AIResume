@@ -4,9 +4,11 @@ from fastapi import APIRouter, Depends
 
 from app.api.v1.auth.dependencies import get_auth_service
 from app.api.v1.auth.schemas import (
-    RegisterRequest,
     LoginRequest,
-    TokenResponse, UserResponse, RefreshRequest,
+    RefreshRequest,
+    RegisterRequest,
+    TokenResponse,
+    UserResponse,
 )
 from app.core.config import Settings, get_settings, settings
 from app.services.auth_service import AuthService
@@ -14,15 +16,17 @@ from app.services.auth_service import AuthService
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register",
-             response_model=UserResponse,
-             )
+@router.post(
+    "/register",
+    response_model=UserResponse,
+)
 async def register(
-        payload: RegisterRequest,
-        service: Annotated[
-            AuthService,
-            Depends(get_auth_service),
-        ]):
+    payload: RegisterRequest,
+    service: Annotated[
+        AuthService,
+        Depends(get_auth_service),
+    ],
+):
     user = await service.register(
         payload.email,
         payload.password,
@@ -35,11 +39,12 @@ async def register(
     response_model=TokenResponse,
 )
 async def login(
-        payload: LoginRequest,
-        service: Annotated[
-            AuthService,
-            Depends(get_auth_service),
-        ]):
+    payload: LoginRequest,
+    service: Annotated[
+        AuthService,
+        Depends(get_auth_service),
+    ],
+):
     return await service.login(
         payload.email,
         payload.password,
@@ -48,11 +53,12 @@ async def login(
 
 @router.post("/logout")
 async def logout(
-        payload: RefreshRequest,
-        service: Annotated[
-            AuthService,
-            Depends(get_auth_service),
-        ]):
+    payload: RefreshRequest,
+    service: Annotated[
+        AuthService,
+        Depends(get_auth_service),
+    ],
+):
     await service.logout(payload)
 
     return {"message": "Logged out"}
@@ -63,11 +69,12 @@ async def logout(
     response_model=TokenResponse,
 )
 async def refresh(
-        payload: RefreshRequest,
-        service: Annotated[
-            AuthService,
-            Depends(get_auth_service),
-        ]):
+    payload: RefreshRequest,
+    service: Annotated[
+        AuthService,
+        Depends(get_auth_service),
+    ],
+):
     return await service.refresh_tokens(payload)
 
 

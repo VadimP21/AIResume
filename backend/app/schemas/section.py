@@ -30,24 +30,26 @@ class SkillItem(BaseModel):
 class SkillsContent(BaseModel):
     skills: list[SkillItem]
 
+
 class SummarySection(BaseModel):
     section_type: Literal[SectionType.SUMMARY]
 
     content: SummaryContent
+
 
 class ExperienceSection(BaseModel):
     section_type: Literal[SectionType.EXPERIENCE]
 
     content: ExperienceContent
 
+
 class SkillsSection(BaseModel):
     section_type: Literal[SectionType.SKILLS]
 
     content: SkillsContent
 
+
 SectionContent = Annotated[
-    SummarySection
-    | ExperienceSection
-    | SkillsSection,
+    SummarySection | ExperienceSection | SkillsSection,
     Field(discriminator="section_type"),
 ]

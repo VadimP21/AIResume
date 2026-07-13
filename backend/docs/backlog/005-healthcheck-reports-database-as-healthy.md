@@ -1,7 +1,7 @@
 # 005. Healthcheck неверно сообщает состояние PostgreSQL
 
 - **Серьёзность:** Medium
-- **Статус:** Open
+- **Статус:** Resolved
 - **Затронутые файлы:** `app/api/v1/health/router.py:15-34`
 
 ## Описание

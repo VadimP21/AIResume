@@ -5,16 +5,15 @@ from app.repositories.resume_version import (
 
 
 class VersioningService:
-
     def __init__(
-            self,
-            repository: ResumeVersionRepository,
+        self,
+        repository: ResumeVersionRepository,
     ):
         self.repository = repository
 
     async def create_snapshot(
-            self,
-            resume: Resume,
+        self,
+        resume: Resume,
     ):
         snapshot = {
             "resume": {
@@ -24,7 +23,7 @@ class VersioningService:
             "sections": [
                 {
                     "id": str(section.id),
-                    "type": section.type.value,
+                    "type": section.section_type.value,
                     "position": section.position,
                     "content": section.content,
                 }
@@ -32,7 +31,14 @@ class VersioningService:
             ],
         }
 
-        return await self.repository.create_version(
-            resume_id=resume.id,
-            snapshot=snapshot,
-        )
+        try:
+            version = await self.repository.create_version(
+                resume_id=resume.id,
+                snapshot=snapshot,
+            )
+            await self.repository.session.commit()
+            await self.repository.session.refresh(version)
+            return version
+        except Exception:
+            await self.repository.session.rollback()
+            raise

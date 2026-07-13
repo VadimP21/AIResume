@@ -29,6 +29,9 @@
 
 ## Проверка локально
 
+Перед запуском Docker создать `.env.docker` из `.env.docker.example` и заменить
+все значения `CHANGE_ME_*`.
+
 ```powershell
 docker compose up -d
 uv run alembic upgrade head

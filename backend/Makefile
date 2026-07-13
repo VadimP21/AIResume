@@ -4,6 +4,12 @@ infra:
 infra-down:
 	docker compose down
 
+docker-up:
+	docker compose --profile app up --build
+
+docker-down:
+	docker compose --profile app down
+
 run:
 	uvicorn app.main:app --reload
 

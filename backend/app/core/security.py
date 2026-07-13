@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
@@ -20,23 +20,23 @@ pwd_context = CryptContext(
 
 def hash_password(password: str) -> str:
     """
-        Хеширует пароль пользователя с использованием Argon2.
+    Хеширует пароль пользователя с использованием Argon2.
 
-        Используется перед сохранением пароля в базе данных.
-        Открытый пароль никогда не должен храниться в БД.
-        """
+    Используется перед сохранением пароля в базе данных.
+    Открытый пароль никогда не должен храниться в БД.
+    """
     return pwd_context.hash(password)
 
 
 def verify_password(
-        plain_password: str,
-        hashed_password: str,
+    plain_password: str,
+    hashed_password: str,
 ) -> bool:
     """
-        Проверяет соответствие пароля и его хеша.
+    Проверяет соответствие пароля и его хеша.
 
-        Используется при аутентификации пользователя.
-        """
+    Используется при аутентификации пользователя.
+    """
     return pwd_context.verify(
         plain_password,
         hashed_password,
@@ -45,28 +45,28 @@ def verify_password(
 
 def hash_token(token: str) -> str:
     """
-       Хеширует refresh token перед сохранением в Redis.
+    Хеширует refresh token перед сохранением в Redis.
 
-       Позволяет не хранить токены в открытом виде.
-       """
+    Позволяет не хранить токены в открытом виде.
+    """
     return pwd_context.hash(token)
 
 
 def create_access_token(
-        subject: str,
-        token_version: int,
+    subject: str,
+    token_version: int,
 ) -> str:
     """
-        Создает JWT access token.
+    Создает JWT access token.
 
-        Access token используется для доступа к защищенным endpoint API.
-        Токен содержит идентификатор пользователя, срок действия,
-        issuer, audience и версию токена.
-        """
-    expire = datetime.now(timezone.utc) + timedelta(
+    Access token используется для доступа к защищенным endpoint API.
+    Токен содержит идентификатор пользователя, срок действия,
+    issuer, audience и версию токена.
+    """
+    expire = datetime.now(UTC) + timedelta(
         minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
     )
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload: dict[str, Any] = {
         "sub": subject,
         "exp": expire,
@@ -84,20 +84,20 @@ def create_access_token(
 
 
 def create_refresh_token(
-        subject: str,
-        token_version: int,
+    subject: str,
+    token_version: int,
 ) -> tuple[str, str]:
     """
-        Создает JWT refresh token и его уникальный идентификатор.
+    Создает JWT refresh token и его уникальный идентификатор.
 
-        Refresh token используется для получения новых access token
-        без повторной авторизации пользователя.
+    Refresh token используется для получения новых access token
+    без повторной авторизации пользователя.
 
-        Возвращает:
-            tuple[token, jti]
-        """
-    expire = datetime.now(timezone.utc) + timedelta(days=7)
-    now = datetime.now(timezone.utc)
+    Возвращает:
+        tuple[token, jti]
+    """
+    expire = datetime.now(UTC) + timedelta(days=7)
+    now = datetime.now(UTC)
     jti = str(uuid4())
     payload = {
         "sub": subject,
@@ -119,16 +119,16 @@ def create_refresh_token(
 
 def decode_token(token: str) -> dict[str, Any]:
     """
-        Декодирует и валидирует JWT token.
+    Декодирует и валидирует JWT token.
 
-        Проверяет:
-        - подпись токена
-        - срок действия
-        - issuer
-        - audience
+    Проверяет:
+    - подпись токена
+    - срок действия
+    - issuer
+    - audience
 
-        Вызывает HTTPException при невалидном или истекшем токене.
-        """
+    Вызывает HTTPException при невалидном или истекшем токене.
+    """
     try:
         payload = jwt.decode(
             token,
@@ -139,10 +139,10 @@ def decode_token(token: str) -> dict[str, Any]:
         )
     except ExpiredSignatureError:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token expired")
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired"
+        ) from None
     except InvalidTokenError:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token")
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        ) from None
     return payload

@@ -1,15 +1,21 @@
-from sqlalchemy import String, ForeignKey, Index
+from typing import TYPE_CHECKING
+
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-from app.db.mixins import UUIDMixin, TimestampMixin
+from app.db.mixins import TimestampMixin, UUIDMixin
+
+if TYPE_CHECKING:
+    from app.models.resume_section import ResumeSection
 
 
-class Resume(Base,
-             UUIDMixin,
-             TimestampMixin,
-             ):
+class Resume(
+    Base,
+    UUIDMixin,
+    TimestampMixin,
+):
     __tablename__ = "resumes"
     # __table_args__ = (
     #     Index(

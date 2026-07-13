@@ -45,6 +45,9 @@ uv run alembic upgrade head
 
 Если PostgreSQL или Redis нужны тесту, запустить инфраструктуру:
 
+Перед запуском Docker создать `.env.docker` из `.env.docker.example` и заменить
+все значения `CHANGE_ME_*`.
+
 ```powershell
 docker compose up -d
 ```
@@ -53,6 +56,9 @@ docker compose up -d
 отдельную PostgreSQL-базу с применёнными миграциями и переменную
 `TEST_DATABASE_URL` в формате `postgresql+asyncpg://...`. Не указывать рабочую
 или локальную development-базу.
+
+Redis integration-тесты требуют отдельный Redis и `TEST_REDIS_URL`. Не
+использовать Redis из development или production.
 
 ## Результат
 

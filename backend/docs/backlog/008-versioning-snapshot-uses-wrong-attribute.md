@@ -1,7 +1,7 @@
 # 008. Формирование snapshot версии обращается к несуществующему полю секции
 
 - **Серьёзность:** Medium
-- **Статус:** Open
+- **Статус:** Resolved
 - **Затронутые файлы:** `app/services/versioning.py:24-32`, `app/models/resume_section.py:35-60`
 
 ## Описание

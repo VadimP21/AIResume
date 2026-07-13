@@ -1,5 +1,6 @@
 from app.models.resume import Resume
-from app.models.resume_section import SectionType, ResumeSection
+from app.models.resume_section import ResumeSection, SectionType
+from app.models.resume_version import ResumeVersion
 from app.models.user import User
 
 __all__ = [
@@ -7,5 +8,5 @@ __all__ = [
     "Resume",
     "SectionType",
     "ResumeSection",
-
+    "ResumeVersion",
 ]

@@ -10,6 +10,9 @@
 2. Убедиться, что изменение модели действительно требует миграции.
 3. Запустить PostgreSQL и применить актуальную схему:
 
+   Перед запуском Docker создать `.env.docker` из `.env.docker.example` и заменить
+   все значения `CHANGE_ME_*`.
+
 ```powershell
 docker compose up -d
 uv run alembic upgrade head

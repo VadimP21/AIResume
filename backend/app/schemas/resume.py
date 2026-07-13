@@ -1,6 +1,7 @@
-from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, Field, ConfigDict
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.resume_section import SectionType
 from app.schemas.section import SectionContent
@@ -32,9 +33,7 @@ class ResumeSectionResponseSchema(BaseModel):
     position: int
     content: dict
 
-    model_config = ConfigDict(
-        from_attributes=True
-    )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ResumeResponseSchema(BaseModel):
@@ -45,9 +44,7 @@ class ResumeResponseSchema(BaseModel):
 
     sections: list[ResumeSectionResponseSchema]
 
-    model_config = ConfigDict(
-        from_attributes=True
-    )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ResumeListResponseSchema(BaseModel):
@@ -55,6 +52,4 @@ class ResumeListResponseSchema(BaseModel):
     title: str
     created_at: datetime
 
-    model_config = ConfigDict(
-        from_attributes=True
-    )
+    model_config = ConfigDict(from_attributes=True)

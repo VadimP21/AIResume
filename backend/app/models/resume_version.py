@@ -1,15 +1,12 @@
 from sqlalchemy import ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
-from app.db.mixins import UUIDMixin, TimestampMixin
+from app.db.mixins import TimestampMixin, UUIDMixin
 
 
-class ResumeVersion(Base,
-             UUIDMixin,
-             TimestampMixin,
-             ):
+class ResumeVersion(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "resume_versions"
 
     resume_id: Mapped[UUID] = mapped_column(

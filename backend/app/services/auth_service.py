@@ -1,3 +1,4 @@
+from typing import Protocol, cast
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -8,12 +9,32 @@ from sqlalchemy.exc import IntegrityError
 from app.api.v1.auth.schemas import RefreshRequest
 from app.core.config import settings
 from app.core.security import (
-    hash_password,
-    verify_password,
     create_access_token,
-    create_refresh_token, hash_token, decode_token,
+    create_refresh_token,
+    decode_token,
+    hash_password,
+    hash_token,
+    verify_password,
 )
 from app.repositories.user_repository import UserRepository
+
+CONSUME_REFRESH_TOKEN_SCRIPT = """
+local stored_hash = redis.call("GET", KEYS[1])
+if not stored_hash or stored_hash ~= ARGV[1] then
+    return 0
+end
+
+return redis.call("DEL", KEYS[1])
+"""
+
+
+class RefreshTokenRedis(Protocol):
+    async def eval(
+        self,
+        script: str,
+        numkeys: int,
+        *keys_and_args: str,
+    ) -> int: ...
 
 
 class AuthService:
@@ -43,7 +64,7 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="User already exists",
-            )
+            ) from None
         except Exception:
             await self.user_repo.session.rollback()
             raise
@@ -101,8 +122,8 @@ class AuthService:
         }
 
     async def logout(
-            self,
-            payload: RefreshRequest,
+        self,
+        payload: RefreshRequest,
     ):
         payload = decode_token(payload.refresh_token)
         user_id = payload["sub"]
@@ -132,9 +153,7 @@ class AuthService:
             )
 
         jti = payload["jti"]
-        deleted = await self.redis.delete(
-            f"refresh:{user_id}:{jti}"
-        )
+        deleted = await self.redis.delete(f"refresh:{user_id}:{jti}")
 
         if not deleted:
             raise HTTPException(
@@ -144,7 +163,7 @@ class AuthService:
 
     async def refresh_tokens(
         self,
-            payload_data: RefreshRequest,
+        payload_data: RefreshRequest,
     ):
         try:
             payload = decode_token(payload_data.refresh_token)
@@ -153,7 +172,7 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token",
-            )
+            ) from None
 
         if payload["type"] != "refresh":
             raise HTTPException(
@@ -162,10 +181,9 @@ class AuthService:
             )
         user_id = payload["sub"]
         jti = payload["jti"]
+        refresh_key = f"refresh:{user_id}:{jti}"
 
-        stored_hash: str|None = await self.redis.get(
-            f"refresh:{user_id}:{jti}"
-        )
+        stored_hash: str | None = await self.redis.get(refresh_key)
 
         if not stored_hash:
             raise HTTPException(
@@ -181,15 +199,26 @@ class AuthService:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token",
             )
-        user = await self.user_repo.get_by_id(
-            UUID(user_id)
-        )
+        user = await self.user_repo.get_by_id(UUID(user_id))
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User not found",
             )
         if payload["tv"] != user.token_version:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token revoked",
+            )
+
+        consumed = await cast(RefreshTokenRedis, self.redis).eval(
+            CONSUME_REFRESH_TOKEN_SCRIPT,
+            1,
+            refresh_key,
+            stored_hash,
+        )
+
+        if not consumed:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token revoked",
@@ -204,8 +233,6 @@ class AuthService:
             user_id,
             user.token_version,
         )
-
-        await self.redis.delete(f"refresh:{user_id}:{jti}")
 
         await self.redis.set(
             f"refresh:{user_id}:{new_jti}",

@@ -95,8 +95,7 @@ backend/
 ├── tests/
 ├── static/
 │
-├── docker-compose.yml
-├── docker-compose.full.yml
+├── docker-compose.yaml
 ├── Dockerfile
 ├── pyproject.toml
 └── README.md
@@ -162,7 +161,11 @@ REDIS_PORT=6379
 
 JWT_SECRET=CHANGE_ME
 JWT_ALGORITHM=HS256
-JWT_EXPIRE_MINUTES=30
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
+JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
+REFRESH_TOKEN_EXPIRE_SECONDS=604800
+
+REDIS_PASSWORD=
 
 CORS_ORIGINS=["http://localhost:3000"]
 ```
@@ -177,6 +180,9 @@ CORS_ORIGINS=["http://localhost:3000"]
 # Run Infrastructure
 
 Start PostgreSQL and Redis:
+
+First copy `.env.docker.example` to `.env.docker` and replace every
+`CHANGE_ME_*` value.
 
 ```bash
 docker compose up -d
@@ -258,9 +264,17 @@ Starts:
 * PostgreSQL
 * Redis
 
+Copy `.env.docker.example` to `.env.docker`, replace every `CHANGE_ME_*` value,
+then run:
+
 ```bash
-docker compose -f docker-compose.full.yml up --build
+docker compose --profile app up --build
 ```
+
+The migration service applies Alembic migrations before API and Celery start.
+PostgreSQL and Redis are published only on `127.0.0.1`.
+
+Detailed commands: [Docker workflow](docs/workflows/docker.md).
 
 ---
 

@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select, func, and_
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -11,14 +11,13 @@ from app.schemas.section import SectionContent
 
 
 class ResumeRepository:
-
     def __init__(self, session: AsyncSession):
         self.session = session
 
     async def create_resume(
-            self,
-            user_id: UUID,
-            title: str,
+        self,
+        user_id: UUID,
+        title: str,
     ) -> Resume:
         resume = Resume(
             user_id=user_id,
@@ -31,9 +30,9 @@ class ResumeRepository:
         return resume
 
     async def get_resume_base(
-            self,
-            user_id: UUID,
-            resume_id: UUID,
+        self,
+        user_id: UUID,
+        resume_id: UUID,
     ):
         query = (
             select(Resume)
@@ -45,15 +44,13 @@ class ResumeRepository:
         return result.scalar_one_or_none()
 
     async def get_resume_with_sections(
-            self,
-            resume_id: UUID,
-            user_id: UUID,
+        self,
+        resume_id: UUID,
+        user_id: UUID,
     ) -> Resume | None:
         query = (
             select(Resume)
-            .options(
-                selectinload(Resume.sections)
-            )
+            .options(selectinload(Resume.sections))
             .where(Resume.id == resume_id, Resume.user_id == user_id)
         )
 
@@ -62,9 +59,9 @@ class ResumeRepository:
         return result.scalar_one_or_none()
 
     async def update_resume(
-            self,
-            resume: Resume,
-            title: str,
+        self,
+        resume: Resume,
+        title: str,
     ) -> Resume:
         if title is not None:
             resume.title = title
@@ -74,17 +71,15 @@ class ResumeRepository:
         return resume
 
     async def list_resumes(
-            self,
-            user_id: UUID,
-            limit: int,
-            offset: int,
+        self,
+        user_id: UUID,
+        limit: int,
+        offset: int,
     ) -> list[Resume]:
         query = (
             select(Resume)
             .where(Resume.user_id == user_id)
-            .options(
-                selectinload(Resume.sections)
-            )
+            .options(selectinload(Resume.sections))
             .order_by(Resume.created_at.desc())
             .limit(limit)
             .offset(offset)
@@ -95,9 +90,9 @@ class ResumeRepository:
         return result.all()
 
     async def delete_resume(
-            self,
-            resume_id: UUID,
-            user_id: UUID,
+        self,
+        resume_id: UUID,
+        user_id: UUID,
     ) -> None:
         resume = Resume(
             resume_id=resume_id,
@@ -106,9 +101,9 @@ class ResumeRepository:
         await self.session.delete(resume)
 
     async def lock_resume(
-            self,
-            resume_id: UUID,
-            user_id: UUID,
+        self,
+        resume_id: UUID,
+        user_id: UUID,
     ) -> Resume | None:
         query = (
             select(Resume)
@@ -124,11 +119,11 @@ class ResumeRepository:
         return result.scalar_one_or_none()
 
     async def add_section(
-            self,
-            resume_id: UUID,
-            section_type: SectionType,
-            content: SectionContent.content,
-            position: int,
+        self,
+        resume_id: UUID,
+        section_type: SectionType,
+        content: SectionContent.content,
+        position: int,
     ) -> ResumeSection:
         section = ResumeSection(
             resume_id=resume_id,
@@ -142,9 +137,9 @@ class ResumeRepository:
         return section
 
     async def get_section(
-            self,
-            section_id: UUID,
-            user_id: UUID,
+        self,
+        section_id: UUID,
+        user_id: UUID,
     ) -> ResumeSection | None:
         query = (
             select(ResumeSection)
@@ -160,9 +155,7 @@ class ResumeRepository:
         return result.scalar_one_or_none()
 
     async def update_section(
-            self,
-            section: ResumeSection,
-            content: dict[str, Any]
+        self, section: ResumeSection, content: dict[str, Any]
     ) -> ResumeSection:
         if content is not None:
             section.content = content
@@ -172,12 +165,10 @@ class ResumeRepository:
         return section
 
     async def get_next_position(
-            self,
-            resume_id: UUID,
+        self,
+        resume_id: UUID,
     ) -> int:
-        query = select(
-            func.max(ResumeSection.position)
-        ).where(
+        query = select(func.max(ResumeSection.position)).where(
             ResumeSection.resume_id == resume_id
         )
 
@@ -188,25 +179,12 @@ class ResumeRepository:
         return (max_position or 0) + 1
 
     async def get_next_position_and_lock_resume(
-            self,
-            resume_id: UUID,
-            user_id: UUID,
+        self,
+        resume_id: UUID,
+        user_id: UUID,
     ) -> int | None:
-        query = (
-            select(
-                func.max(Resume.sections.position)
-            ).where(
-                Resume.id == resume_id,
-                Resume.user_id == user_id,
-            )
-            .with_for_update()
-        )
+        resume = await self.lock_resume(resume_id, user_id)
+        if resume is None:
+            return None
 
-        result = await self.session.execute(query)
-
-        max_position = result.scalar_one_or_none()
-
-        if max_position is not None:
-            return max_position + 1
-
-        return max_position
+        return await self.get_next_position(resume_id)

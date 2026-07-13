@@ -1,4 +1,5 @@
 import logging
+
 import structlog
 
 """
@@ -21,6 +22,7 @@ logger.info(
 }
 """
 
+
 def setup_logging():
     structlog.configure(
         processors=[
@@ -28,7 +30,5 @@ def setup_logging():
             structlog.processors.add_log_level,
             structlog.processors.JSONRenderer(),
         ],
-        wrapper_class=structlog.make_filtering_bound_logger(
-            logging.INFO
-        ),
+        wrapper_class=structlog.make_filtering_bound_logger(logging.INFO),
     )

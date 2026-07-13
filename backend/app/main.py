@@ -1,22 +1,18 @@
 from fastapi import FastAPI
-
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from slowapi.middleware import SlowAPIMiddleware
 from starlette.staticfiles import StaticFiles
 
-from app.core.lifespan import lifespan
-from app.core.config import settings
 from app.api.router import api_router
-
+from app.core.app_logging import setup_logging
+from app.core.config import settings
 from app.core.exceptions import (
     AppException,
     app_exception_handler,
 )
-
-from app.core.app_logging import setup_logging
+from app.core.lifespan import lifespan
 from app.core.rate_limit import limiter
-
 from app.middleware.logging import LoggingMiddleware
 from app.middleware.request_id import RequestIDMiddleware
 from app.middleware.security import SecurityHeadersMiddleware
