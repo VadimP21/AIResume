@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля test_versioning_service."""
+
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 from uuid import uuid4
@@ -10,6 +12,7 @@ from app.services.versioning import VersioningService
 
 @pytest.mark.asyncio
 async def test_create_snapshot_serializes_all_section_types() -> None:
+    """Проверяет сценарий create snapshot serializes all section types."""
     resume_id = uuid4()
     sections = [
         SimpleNamespace(

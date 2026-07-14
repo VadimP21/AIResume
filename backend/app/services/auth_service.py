@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля auth_service."""
+
 from typing import Protocol, cast
 from uuid import UUID
 
@@ -29,20 +31,27 @@ return redis.call("DEL", KEYS[1])
 
 
 class RefreshTokenRedis(Protocol):
+    """Представляет сущность RefreshTokenRedis."""
+
     async def eval(
         self,
         script: str,
         numkeys: int,
         *keys_and_args: str,
-    ) -> int: ...
+    ) -> int:
+        """Выполняет операцию eval."""
+        ...
 
 
 class AuthService:
+    """Представляет сущность AuthService."""
+
     def __init__(
         self,
         user_repo: UserRepository,
         redis: Redis,
     ):
+        """Инициализирует экземпляр."""
         self.user_repo = user_repo
         self.redis = redis
 
@@ -51,6 +60,7 @@ class AuthService:
         email: str,
         password: str,
     ):
+        """Выполняет операцию register."""
         try:
             email = email.lower().strip()
             user = await self.user_repo.create(
@@ -76,6 +86,7 @@ class AuthService:
         email: str,
         password: str,
     ):
+        """Выполняет операцию login."""
         email = email.lower().strip()
         user = await self.user_repo.get_by_email(email)
         if not user:
@@ -125,6 +136,7 @@ class AuthService:
         self,
         payload: RefreshRequest,
     ):
+        """Выполняет операцию logout."""
         payload = decode_token(payload.refresh_token)
         user_id = payload["sub"]
         user = await self.user_repo.get_by_id(UUID(user_id))
@@ -165,6 +177,7 @@ class AuthService:
         self,
         payload_data: RefreshRequest,
     ):
+        """Выполняет операцию refresh tokens."""
         try:
             payload = decode_token(payload_data.refresh_token)
 
@@ -250,6 +263,7 @@ class AuthService:
         email: str,
         password: str,
     ):
+        """Выполняет операцию fake auth."""
         if await self.user_repo.get_by_email(email):
             return await self.login(
                 email,

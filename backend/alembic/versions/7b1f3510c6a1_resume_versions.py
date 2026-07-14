@@ -19,6 +19,7 @@ depends_on: Sequence[str] | None = None
 
 
 def upgrade() -> None:
+    """Выполняет операцию upgrade."""
     op.create_table(
         "resume_versions",
         sa.Column("resume_id", sa.UUID(), nullable=False),
@@ -38,5 +39,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Выполняет операцию downgrade."""
     op.drop_index(op.f("ix_resume_versions_resume_id"), table_name="resume_versions")
     op.drop_table("resume_versions")

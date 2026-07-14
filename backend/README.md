@@ -9,6 +9,9 @@ Production-ready backend for AI-powered resume and cover letter generation platf
 - [Тестирование](docs/workflows/testing.md)
 - [Миграции](docs/workflows/migrations.md)
 - [Code review](docs/workflows/code-review.md)
+- [Git-ветки](docs/workflows/git-branches.md)
+- [Коммиты](docs/workflows/commits.md)
+- [Docker](docs/workflows/docker.md)
 
 Built with:
 - FastAPI

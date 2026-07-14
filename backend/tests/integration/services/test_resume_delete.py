@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля test_resume_delete."""
+
 from uuid import uuid4
 
 import pytest
@@ -12,6 +14,7 @@ from app.services.resume import ResumeService
 async def test_deleted_resume_is_absent_in_new_session(
     test_session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
+    """Проверяет сценарий deleted resume is absent in new session."""
     session_factory = test_session_factory
     user_id = None
 

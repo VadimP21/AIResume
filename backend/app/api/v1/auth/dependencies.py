@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля dependencies."""
+
 from uuid import UUID
 
 from fastapi import Depends, HTTPException
@@ -18,6 +20,7 @@ async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     session: AsyncSession = Depends(get_db),
 ):
+    """Возвращает current user."""
     if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -66,6 +69,7 @@ async def get_current_user(
 def get_auth_service(
     session: AsyncSession = Depends(get_db),
 ) -> AuthService:
+    """Возвращает auth service."""
     repo = UserRepository(session)
 
     return AuthService(

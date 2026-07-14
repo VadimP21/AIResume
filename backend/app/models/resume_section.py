@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля resume_section."""
+
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
@@ -15,6 +17,8 @@ if TYPE_CHECKING:
 
 
 class SectionType(StrEnum):
+    """Представляет сущность SectionType."""
+
     SUMMARY = "summary"
     EXPERIENCE = "experience"
     EDUCATION = "education"
@@ -28,6 +32,8 @@ class ResumeSection(
     UUIDMixin,
     TimestampMixin,
 ):
+    """Представляет сущность ResumeSection."""
+
     __tablename__ = "resume_sections"
 
     __table_args__ = (

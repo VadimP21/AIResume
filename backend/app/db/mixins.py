@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля mixins."""
+
 from datetime import UTC, datetime
 from uuid import uuid4
 
@@ -7,6 +9,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 
 class UUIDMixin:
+    """Представляет сущность UUIDMixin."""
+
     id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -15,6 +19,8 @@ class UUIDMixin:
 
 
 class TimestampMixin:
+    """Представляет сущность TimestampMixin."""
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),

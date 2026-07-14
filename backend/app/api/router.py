@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля router."""
+
 from fastapi import APIRouter
 
 from app.api.v1.auth.router import router as auth_router

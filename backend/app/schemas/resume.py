@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля resume."""
+
 from datetime import datetime
 from uuid import UUID
 
@@ -8,10 +10,14 @@ from app.schemas.section import SectionContent
 
 
 class ResumeCreateSchema(BaseModel):
+    """Представляет сущность ResumeCreateSchema."""
+
     title: str = Field(min_length=1, max_length=255)
 
 
 class ResumeUpdateSchema(BaseModel):
+    """Представляет сущность ResumeUpdateSchema."""
+
     title: str | None = Field(
         default=None,
         min_length=1,
@@ -20,14 +26,20 @@ class ResumeUpdateSchema(BaseModel):
 
 
 class ResumeSectionCreateSchema(BaseModel):
+    """Представляет сущность ResumeSectionCreateSchema."""
+
     section: SectionContent
 
 
 class ResumeSectionUpdateSchema(BaseModel):
+    """Представляет сущность ResumeSectionUpdateSchema."""
+
     content: dict
 
 
 class ResumeSectionResponseSchema(BaseModel):
+    """Представляет сущность ResumeSectionResponseSchema."""
+
     id: UUID
     section_type: SectionType
     position: int
@@ -37,6 +49,8 @@ class ResumeSectionResponseSchema(BaseModel):
 
 
 class ResumeResponseSchema(BaseModel):
+    """Представляет сущность ResumeResponseSchema."""
+
     id: UUID
     title: str
     created_at: datetime
@@ -48,6 +62,8 @@ class ResumeResponseSchema(BaseModel):
 
 
 class ResumeListResponseSchema(BaseModel):
+    """Представляет сущность ResumeListResponseSchema."""
+
     id: UUID
     title: str
     created_at: datetime

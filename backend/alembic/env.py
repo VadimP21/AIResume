@@ -1,3 +1,4 @@
+"""Содержит компоненты модуля env."""
 from logging.config import fileConfig
 
 from sqlalchemy import create_engine
@@ -16,6 +17,7 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline():
+    """Выполняет операцию run migrations offline."""
     context.configure(
         url=str(settings.DATABASE_URL),
         target_metadata=target_metadata,
@@ -28,6 +30,7 @@ def run_migrations_offline():
 
 
 def run_migrations_online():
+    """Выполняет операцию run migrations online."""
     connectable = create_engine(
         str(settings.DATABASE_URL),
         pool_pre_ping=True,

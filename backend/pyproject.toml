@@ -104,8 +104,6 @@ exclude = [
     "alembic",
 ]
 
-plugins = []
-
 [tool.coverage.run]
 source = ["app"]
 

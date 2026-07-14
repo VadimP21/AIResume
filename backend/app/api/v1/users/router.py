@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля router."""
+
 from fastapi import APIRouter, Depends
 
 from app.api.v1.auth.dependencies import get_current_user
@@ -17,4 +19,5 @@ router = APIRouter(
 async def me(
     user: User = Depends(get_current_user),
 ):
+    """Выполняет операцию me."""
     return user

@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля app_logging."""
+
 import logging
 
 import structlog
@@ -24,6 +26,7 @@ logger.info(
 
 
 def setup_logging():
+    """Выполняет операцию setup logging."""
     structlog.configure(
         processors=[
             structlog.processors.TimeStamper(fmt="iso"),

@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля test_fake_auth_route."""
+
 from typing import Any
 
 import pytest
@@ -11,6 +13,7 @@ from app.core.config import Settings, get_settings
 
 
 def make_settings(**overrides: Any) -> Settings:
+    """Создаёт settings."""
     values: dict[str, Any] = {
         "POSTGRES_HOST": "localhost",
         "POSTGRES_DB": "test",
@@ -25,11 +28,13 @@ def make_settings(**overrides: Any) -> Settings:
 
 
 def route_paths(auth_router: APIRouter) -> set[str]:
+    """Выполняет операцию route paths."""
     return {route.path for route in auth_router.routes}
 
 
 @pytest.mark.parametrize("app_env", ["development", "test"])
 def test_fake_auth_route_requires_explicit_flag(app_env: str) -> None:
+    """Проверяет сценарий fake auth route requires explicit flag."""
     app_settings = make_settings(APP_ENV=app_env, ENABLE_FAKE_AUTH=False)
     auth_router = APIRouter()
 
@@ -40,6 +45,7 @@ def test_fake_auth_route_requires_explicit_flag(app_env: str) -> None:
 
 @pytest.mark.parametrize("app_env", ["development", "test"])
 def test_fake_auth_route_is_available_in_allowed_environment(app_env: str) -> None:
+    """Проверяет сценарий fake auth route is available in allowed environment."""
     app_settings = make_settings(
         APP_ENV=app_env,
         ENABLE_FAKE_AUTH=True,
@@ -57,6 +63,7 @@ def test_fake_auth_route_is_available_in_allowed_environment(app_env: str) -> No
 def test_fake_auth_cannot_be_enabled_outside_allowed_environment(
     app_env: str,
 ) -> None:
+    """Проверяет сценарий fake auth cannot be enabled outside allowed environment."""
     with pytest.raises(
         ValidationError,
         match="ENABLE_FAKE_AUTH is allowed only in development or test",
@@ -70,6 +77,7 @@ def test_fake_auth_cannot_be_enabled_outside_allowed_environment(
 
 
 def test_fake_auth_requires_configured_credentials() -> None:
+    """Проверяет сценарий fake auth requires configured credentials."""
     with pytest.raises(
         ValidationError,
         match="FAKE_AUTH_EMAIL and FAKE_AUTH_PASSWORD are required",
@@ -81,6 +89,7 @@ def test_fake_auth_requires_configured_credentials() -> None:
 
 
 def test_fake_auth_endpoint_uses_configured_credentials() -> None:
+    """Проверяет сценарий fake auth endpoint uses configured credentials."""
     app_settings = make_settings(
         APP_ENV="development",
         ENABLE_FAKE_AUTH=True,
@@ -90,7 +99,10 @@ def test_fake_auth_endpoint_uses_configured_credentials() -> None:
     received_credentials: list[tuple[str, str]] = []
 
     class FakeAuthService:
+        """Представляет сущность FakeAuthService."""
+
         async def fake_auth(self, email: str, password: str) -> dict[str, str]:
+            """Выполняет операцию fake auth."""
             received_credentials.append((email, password))
             return {
                 "access_token": "access-token",

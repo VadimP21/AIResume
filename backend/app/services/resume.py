@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля resume."""
+
 from uuid import UUID
 
 from app.core.exceptions import NotFoundException
@@ -11,10 +13,13 @@ from app.schemas.resume import (
 
 
 class ResumeService:
+    """Представляет сущность ResumeService."""
+
     def __init__(
         self,
         repository: ResumeRepository,
     ):
+        """Инициализирует экземпляр."""
         self.repository = repository
 
     async def create_resume(
@@ -22,6 +27,7 @@ class ResumeService:
         user_id: UUID,
         data: ResumeCreateSchema,
     ):
+        """Создаёт resume."""
         try:
             resume = await self.repository.create_resume(
                 user_id=user_id,
@@ -43,7 +49,7 @@ class ResumeService:
         resume_id: UUID,
         user_id: UUID,
     ):
-
+        """Возвращает resume."""
         resume = await self.repository.get_resume_with_sections(
             user_id=user_id,
             resume_id=resume_id,
@@ -60,7 +66,7 @@ class ResumeService:
         user_id: UUID,
         data: ResumeUpdateSchema,
     ):
-
+        """Обновляет resume."""
         resume = await self.repository.get_resume_base(
             resume_id,
             user_id,
@@ -89,7 +95,7 @@ class ResumeService:
         limit: int,
         offset: int,
     ):
-
+        """Возвращает list resumes."""
         return await self.repository.list_resumes(
             user_id,
             limit,
@@ -101,6 +107,7 @@ class ResumeService:
         resume_id: UUID,
         user_id: UUID,
     ):
+        """Удаляет resume."""
         resume = await self.repository.get_resume_base(
             resume_id=resume_id,
             user_id=user_id,
@@ -122,6 +129,7 @@ class ResumeService:
         user_id: UUID,
         data: ResumeSectionCreateSchema,
     ):
+        """Выполняет операцию add section."""
         try:
             position = await self.repository.get_next_position_and_lock_resume(
                 resume_id,
@@ -152,7 +160,7 @@ class ResumeService:
         user_id: UUID,
         data: ResumeSectionUpdateSchema,
     ):
-
+        """Обновляет section."""
         section = await self.repository.get_section(
             section_id,
             user_id,

@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля request_id."""
+
 from uuid import uuid4
 
 import structlog
@@ -5,12 +7,14 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):
+    """Представляет сущность RequestIDMiddleware."""
+
     async def dispatch(
         self,
         request,
         call_next,
     ):
-
+        """Выполняет операцию dispatch."""
         request_id = request.headers.get(
             "X-Request-ID",
             str(uuid4()),

@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля logging."""
+
 import time
 
 import structlog
@@ -7,7 +9,10 @@ logger = structlog.get_logger()
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
+    """Представляет сущность LoggingMiddleware."""
+
     async def dispatch(self, request, call_next):
+        """Выполняет операцию dispatch."""
         start = time.time()
 
         response = await call_next(request)

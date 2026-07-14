@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля versioning."""
+
 from app.models.resume import Resume
 from app.repositories.resume_version import (
     ResumeVersionRepository,
@@ -5,16 +7,20 @@ from app.repositories.resume_version import (
 
 
 class VersioningService:
+    """Представляет сущность VersioningService."""
+
     def __init__(
         self,
         repository: ResumeVersionRepository,
     ):
+        """Инициализирует экземпляр."""
         self.repository = repository
 
     async def create_snapshot(
         self,
         resume: Resume,
     ):
+        """Создаёт snapshot."""
         snapshot = {
             "resume": {
                 "id": str(resume.id),

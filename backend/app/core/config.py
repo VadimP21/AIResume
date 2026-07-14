@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля config."""
+
 from functools import lru_cache
 from typing import Literal
 
@@ -14,6 +16,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """Представляет сущность Settings."""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -104,12 +108,14 @@ class Settings(BaseSettings):
     @field_validator("JWT_SECRET")
     @classmethod
     def validate_jwt_secret(cls, value: str) -> str:
+        """Проверяет jwt secret."""
         if len(value) < 32:
             raise ValueError("JWT_SECRET must contain at least 32 characters")
         return value
 
     @model_validator(mode="after")
     def validate_environment(self):
+        """Проверяет environment."""
         if self.APP_ENV == "production" and self.DEBUG:
             raise ValueError("DEBUG must be False in production")
 
@@ -129,9 +135,11 @@ class Settings(BaseSettings):
 
     @property
     def fake_auth_enabled(self) -> bool:
+        """Выполняет операцию fake auth enabled."""
         return self.ENABLE_FAKE_AUTH and self.APP_ENV in {"development", "test"}
 
     def get_fake_auth_credentials(self) -> tuple[str, str]:
+        """Возвращает fake auth credentials."""
         if (
             not self.fake_auth_enabled
             or self.FAKE_AUTH_EMAIL is None
@@ -148,6 +156,7 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def ASYNC_DATABASE_URL(self) -> PostgresDsn:
+        """Выполняет операцию ASYNC DATABASE URL."""
         return PostgresDsn(
             f"postgresql+asyncpg://"
             f"{self.POSTGRES_USER}:"
@@ -160,6 +169,7 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def DATABASE_URL(self) -> PostgresDsn:
+        """Выполняет операцию DATABASE URL."""
         return PostgresDsn(
             f"postgresql+psycopg://"
             f"{self.POSTGRES_USER}:"
@@ -172,6 +182,7 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def REDIS_URL(self) -> RedisDsn:
+        """Выполняет операцию REDIS URL."""
         return RedisDsn(
             f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/0"
         )
@@ -179,6 +190,7 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
+    """Возвращает settings."""
     return Settings()
 
 

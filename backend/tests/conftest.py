@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля conftest."""
+
 import os
 from collections.abc import AsyncIterator
 
@@ -9,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 @pytest.fixture(scope="session")
 def test_database_url() -> str:
+    """Проверяет сценарий database url."""
     url = os.getenv("TEST_DATABASE_URL")
     if not url:
         pytest.skip("TEST_DATABASE_URL is not configured")
@@ -19,6 +22,7 @@ def test_database_url() -> str:
 async def test_session_factory(
     test_database_url: str,
 ) -> AsyncIterator[async_sessionmaker[AsyncSession]]:
+    """Проверяет сценарий session factory."""
     engine = create_async_engine(test_database_url)
     try:
         yield async_sessionmaker(engine, expire_on_commit=False)
@@ -28,6 +32,7 @@ async def test_session_factory(
 
 @pytest_asyncio.fixture
 async def test_redis() -> AsyncIterator[Redis]:
+    """Проверяет сценарий redis."""
     url = os.getenv("TEST_REDIS_URL")
     if not url:
         pytest.skip("TEST_REDIS_URL is not configured")

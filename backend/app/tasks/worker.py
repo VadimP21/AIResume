@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля worker."""
+
 from celery import Celery
 
 from app.core.config import settings
@@ -11,4 +13,5 @@ celery_app = Celery(
 
 @celery_app.task
 def ping():
+    """Выполняет операцию ping."""
     return "pong"

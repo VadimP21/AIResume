@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля user."""
+
 from sqlalchemy import Boolean, Integer, String, text
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -10,6 +12,8 @@ class User(
     UUIDMixin,
     TimestampMixin,
 ):
+    """Представляет сущность User."""
+
     __tablename__ = "users"
 
     email: Mapped[str] = mapped_column(

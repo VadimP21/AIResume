@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля main_offline."""
+
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi_offline import FastAPIOffline
@@ -65,6 +67,7 @@ app.include_router(api_router)
 
 @app.get("/")
 async def root():
+    """Выполняет операцию root."""
     return {
         "status": "ok",
     }

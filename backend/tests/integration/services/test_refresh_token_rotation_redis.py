@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля test_refresh_token_rotation_redis."""
+
 import asyncio
 from types import SimpleNamespace
 from uuid import uuid4
@@ -12,12 +14,16 @@ from app.services.auth_service import AuthService
 
 
 class BarrierUserRepository:
+    """Представляет сущность BarrierUserRepository."""
+
     def __init__(self, user: SimpleNamespace) -> None:
+        """Инициализирует экземпляр."""
         self.user = user
         self._requests = 0
         self._both_requests_ready = asyncio.Event()
 
     async def get_by_id(self, user_id: object) -> SimpleNamespace | None:
+        """Возвращает by id."""
         self._requests += 1
         if self._requests == 2:
             self._both_requests_ready.set()
@@ -31,6 +37,7 @@ async def test_refresh_token_is_consumed_once_in_parallel_requests(
     monkeypatch: pytest.MonkeyPatch,
     test_redis: Redis,
 ) -> None:
+    """Проверяет сценарий refresh token is consumed once in parallel requests."""
     redis = test_redis
     user = SimpleNamespace(id=uuid4(), token_version=1, is_active=True)
     jti = str(uuid4())

@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля test_resume_versioning."""
+
 from uuid import uuid4
 
 import pytest
@@ -14,6 +16,7 @@ from app.services.versioning import VersioningService
 async def test_resume_version_is_persisted_and_read(
     test_session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
+    """Проверяет сценарий resume version is persisted and read."""
     async with test_session_factory() as session:
         user = User(
             email=f"version-{uuid4()}@example.com",

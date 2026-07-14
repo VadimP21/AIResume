@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля test_resume_service."""
+
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 from uuid import uuid4
@@ -8,6 +10,7 @@ from app.services.resume import ResumeService
 
 
 def make_repository(resume: object) -> SimpleNamespace:
+    """Создаёт repository."""
     session = SimpleNamespace(
         delete=AsyncMock(),
         flush=AsyncMock(),
@@ -22,6 +25,7 @@ def make_repository(resume: object) -> SimpleNamespace:
 
 @pytest.mark.asyncio
 async def test_delete_resume_commits_transaction() -> None:
+    """Проверяет сценарий delete resume commits transaction."""
     resume = object()
     repository = make_repository(resume)
     service = ResumeService(repository)
@@ -42,6 +46,7 @@ async def test_delete_resume_commits_transaction() -> None:
 
 @pytest.mark.asyncio
 async def test_delete_resume_rolls_back_when_commit_fails() -> None:
+    """Проверяет сценарий delete resume rolls back when commit fails."""
     resume = object()
     repository = make_repository(resume)
     repository.session.commit.side_effect = RuntimeError("commit failed")

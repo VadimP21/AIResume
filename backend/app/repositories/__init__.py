@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля __init__."""
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -5,13 +7,17 @@ from app.models.user import User
 
 
 class UserRepository:
+    """Представляет сущность UserRepository."""
+
     def __init__(self, db: AsyncSession):
+        """Инициализирует экземпляр."""
         self.db = db
 
     async def get_by_email(
         self,
         email: str,
     ) -> User | None:
+        """Возвращает by email."""
         stmt = select(User).where(User.email == email)
 
         result = await self.db.execute(stmt)
@@ -22,6 +28,7 @@ class UserRepository:
         self,
         user: User,
     ) -> User:
+        """Выполняет операцию create."""
         self.db.add(user)
 
         await self.db.commit()

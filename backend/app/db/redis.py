@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля redis."""
+
 from redis.asyncio import Redis
 
 from app.core.config import settings
@@ -11,4 +13,5 @@ redis_client = Redis(
 
 
 async def get_redis():
+    """Возвращает redis."""
     return redis_client

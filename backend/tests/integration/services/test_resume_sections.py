@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля test_resume_sections."""
+
 import asyncio
 from uuid import uuid4
 
@@ -14,6 +16,7 @@ from app.services.resume import ResumeService
 
 
 def section_data() -> ResumeSectionCreateSchema:
+    """Выполняет операцию section data."""
     return ResumeSectionCreateSchema(
         section=SummarySection(
             section_type=SectionType.SUMMARY,
@@ -23,6 +26,7 @@ def section_data() -> ResumeSectionCreateSchema:
 
 
 async def create_resume(session_factory: async_sessionmaker[AsyncSession]) -> tuple:
+    """Создаёт resume."""
     async with session_factory() as session:
         user = User(
             email=f"sections-{uuid4()}@example.com",
@@ -40,6 +44,7 @@ async def create_resume(session_factory: async_sessionmaker[AsyncSession]) -> tu
 async def test_sections_receive_sequential_positions(
     test_session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
+    """Проверяет сценарий sections receive sequential positions."""
     user_id, resume_id = await create_resume(test_session_factory)
     try:
         async with test_session_factory() as session:
@@ -60,10 +65,12 @@ async def test_sections_receive_sequential_positions(
 async def test_parallel_section_creation_assigns_unique_positions(
     test_session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
+    """Проверяет сценарий parallel section creation assigns unique positions."""
     user_id, resume_id = await create_resume(test_session_factory)
     try:
 
         async def add_section() -> int:
+            """Выполняет операцию add section."""
             async with test_session_factory() as session:
                 section = await ResumeService(ResumeRepository(session)).add_section(
                     resume_id,

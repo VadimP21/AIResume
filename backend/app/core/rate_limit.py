@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля rate_limit."""
+
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 

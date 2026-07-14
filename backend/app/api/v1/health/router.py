@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля router."""
+
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
@@ -13,6 +15,7 @@ router = APIRouter(
 
 @router.get("")
 async def healthcheck():
+    """Выполняет операцию healthcheck."""
     db_status = "ok"
     redis_status = "ok"
     try:

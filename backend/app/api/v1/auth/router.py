@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля router."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -27,6 +29,7 @@ async def register(
         Depends(get_auth_service),
     ],
 ):
+    """Выполняет операцию register."""
     user = await service.register(
         payload.email,
         payload.password,
@@ -45,6 +48,7 @@ async def login(
         Depends(get_auth_service),
     ],
 ):
+    """Выполняет операцию login."""
     return await service.login(
         payload.email,
         payload.password,
@@ -59,6 +63,7 @@ async def logout(
         Depends(get_auth_service),
     ],
 ):
+    """Выполняет операцию logout."""
     await service.logout(payload)
 
     return {"message": "Logged out"}
@@ -75,6 +80,7 @@ async def refresh(
         Depends(get_auth_service),
     ],
 ):
+    """Выполняет операцию refresh."""
     return await service.refresh_tokens(payload)
 
 
@@ -88,6 +94,7 @@ async def fake_auth(
         Depends(get_settings),
     ],
 ):
+    """Выполняет операцию fake auth."""
     email, password = app_settings.get_fake_auth_credentials()
 
     return await service.fake_auth(email, password)
@@ -97,6 +104,7 @@ def _register_fake_auth_route(
     auth_router: APIRouter,
     app_settings: Settings,
 ) -> None:
+    """Выполняет операцию  register fake auth route."""
     if not app_settings.fake_auth_enabled:
         return
 

@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля test_refresh_token_rotation."""
+
 import asyncio
 from types import SimpleNamespace
 from uuid import uuid4
@@ -11,12 +13,16 @@ from app.services.auth_service import CONSUME_REFRESH_TOKEN_SCRIPT, AuthService
 
 
 class InMemoryRefreshRedis:
+    """Представляет сущность InMemoryRefreshRedis."""
+
     def __init__(self, values: dict[str, str]) -> None:
+        """Инициализирует экземпляр."""
         self.values = values
         self.set_calls: list[tuple[str, str, int]] = []
         self._lock = asyncio.Lock()
 
     async def get(self, key: str) -> str | None:
+        """Выполняет операцию get."""
         return self.values.get(key)
 
     async def eval(
@@ -26,6 +32,7 @@ class InMemoryRefreshRedis:
         key: str,
         expected_hash: str,
     ) -> int:
+        """Выполняет операцию eval."""
         assert script == CONSUME_REFRESH_TOKEN_SCRIPT
         assert numkeys == 1
 
@@ -36,17 +43,22 @@ class InMemoryRefreshRedis:
             return 1
 
     async def set(self, key: str, value: str, *, ex: int) -> None:
+        """Выполняет операцию set."""
         self.values[key] = value
         self.set_calls.append((key, value, ex))
 
 
 class BarrierUserRepository:
+    """Представляет сущность BarrierUserRepository."""
+
     def __init__(self, user: SimpleNamespace) -> None:
+        """Инициализирует экземпляр."""
         self.user = user
         self._requests = 0
         self._both_requests_ready = asyncio.Event()
 
     async def get_by_id(self, user_id: object) -> SimpleNamespace | None:
+        """Возвращает by id."""
         self._requests += 1
         if self._requests == 2:
             self._both_requests_ready.set()
@@ -59,6 +71,7 @@ class BarrierUserRepository:
 async def test_refresh_token_rotation_allows_only_one_parallel_request(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Проверяет сценарий refresh token rotation allows only one parallel request."""
     user = SimpleNamespace(id=uuid4(), token_version=1, is_active=True)
     jti = "original-jti"
     refresh_key = f"refresh:{user.id}:{jti}"

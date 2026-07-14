@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля test_resume_section_service."""
+
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 from uuid import uuid4
@@ -11,6 +13,7 @@ from app.services.resume import ResumeService
 
 
 def make_data() -> ResumeSectionCreateSchema:
+    """Создаёт data."""
     return ResumeSectionCreateSchema(
         section=SummarySection(
             section_type=SectionType.SUMMARY,
@@ -20,6 +23,7 @@ def make_data() -> ResumeSectionCreateSchema:
 
 
 def make_repository(position: int | None) -> SimpleNamespace:
+    """Создаёт repository."""
     section = SimpleNamespace(id=uuid4())
     session = SimpleNamespace(
         commit=AsyncMock(), refresh=AsyncMock(), rollback=AsyncMock()
@@ -33,6 +37,7 @@ def make_repository(position: int | None) -> SimpleNamespace:
 
 @pytest.mark.asyncio
 async def test_add_section_uses_first_position() -> None:
+    """Проверяет сценарий add section uses first position."""
     repository = make_repository(position=1)
     service = ResumeService(repository)
     resume_id = uuid4()
@@ -52,6 +57,7 @@ async def test_add_section_uses_first_position() -> None:
 
 @pytest.mark.asyncio
 async def test_add_section_rolls_back_when_commit_fails() -> None:
+    """Проверяет сценарий add section rolls back when commit fails."""
     repository = make_repository(position=2)
     repository.session.commit.side_effect = RuntimeError("commit failed")
     service = ResumeService(repository)

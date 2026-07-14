@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля router."""
+
 from typing import Annotated
 from uuid import UUID
 
@@ -35,6 +37,7 @@ async def create_resume(
     service: Annotated[ResumeService, Depends(get_resume_service)],
     current_user: User = Depends(get_current_user),
 ):
+    """Создаёт resume."""
     return await service.create_resume(
         user_id=current_user.id,
         data=data,
@@ -51,6 +54,7 @@ async def get_resume(
     current_user: User = Depends(get_current_user),
     service: ResumeService = Depends(get_resume_service),
 ):
+    """Возвращает resume."""
     return await service.get_resume(resume_id, current_user.id)
 
 
@@ -64,6 +68,7 @@ async def update_resume(
     current_user: User = Depends(get_current_user),
     service: ResumeService = Depends(get_resume_service),
 ):
+    """Обновляет resume."""
     return await service.update_resume(
         resume_id,
         current_user.id,
@@ -80,6 +85,7 @@ async def delete_resume(
     current_user: User = Depends(get_current_user),
     service: ResumeService = Depends(get_resume_service),
 ):
+    """Удаляет resume."""
     await service.delete_resume(resume_id, current_user.id)
 
 
@@ -94,6 +100,7 @@ async def add_section(
     current_user: User = Depends(get_current_user),
     service: ResumeService = Depends(get_resume_service),
 ):
+    """Выполняет операцию add section."""
     return await service.add_section(
         resume_id=resume_id,
         user_id=current_user.id,
@@ -111,6 +118,7 @@ async def update_section(
     current_user: User = Depends(get_current_user),
     service: ResumeService = Depends(get_resume_service),
 ):
+    """Обновляет section."""
     return await service.update_section(
         section_id,
         current_user.id,
@@ -129,4 +137,5 @@ async def list_resumes(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
+    """Выполняет операцию list resumes."""
     return await service.get_list_resumes(current_user.id, limit, offset)

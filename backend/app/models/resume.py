@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля resume."""
+
 from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, String
@@ -16,6 +18,8 @@ class Resume(
     UUIDMixin,
     TimestampMixin,
 ):
+    """Представляет сущность Resume."""
+
     __tablename__ = "resumes"
     # __table_args__ = (
     #     Index(

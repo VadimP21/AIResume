@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля resume_version."""
+
 from uuid import UUID
 
 from sqlalchemy import select
@@ -7,7 +9,10 @@ from app.models.resume_version import ResumeVersion
 
 
 class ResumeVersionRepository:
+    """Представляет сущность ResumeVersionRepository."""
+
     def __init__(self, session: AsyncSession):
+        """Инициализирует экземпляр."""
         self.session = session
 
     async def create_version(
@@ -15,6 +20,7 @@ class ResumeVersionRepository:
         resume_id: UUID,
         snapshot: dict,
     ) -> ResumeVersion:
+        """Создаёт version."""
         version = ResumeVersion(
             resume_id=resume_id,
             snapshot=snapshot,
@@ -29,6 +35,7 @@ class ResumeVersionRepository:
         self,
         resume_id: UUID,
     ) -> list[ResumeVersion]:
+        """Выполняет операцию list versions."""
         query = (
             select(ResumeVersion)
             .where(ResumeVersion.resume_id == resume_id)

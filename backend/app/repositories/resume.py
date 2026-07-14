@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля resume."""
+
 from typing import Any
 from uuid import UUID
 
@@ -11,7 +13,10 @@ from app.schemas.section import SectionContent
 
 
 class ResumeRepository:
+    """Представляет сущность ResumeRepository."""
+
     def __init__(self, session: AsyncSession):
+        """Инициализирует экземпляр."""
         self.session = session
 
     async def create_resume(
@@ -19,6 +24,7 @@ class ResumeRepository:
         user_id: UUID,
         title: str,
     ) -> Resume:
+        """Создаёт resume."""
         resume = Resume(
             user_id=user_id,
             title=title,
@@ -34,6 +40,7 @@ class ResumeRepository:
         user_id: UUID,
         resume_id: UUID,
     ):
+        """Возвращает resume base."""
         query = (
             select(Resume)
             .where(Resume.id == resume_id)
@@ -48,6 +55,7 @@ class ResumeRepository:
         resume_id: UUID,
         user_id: UUID,
     ) -> Resume | None:
+        """Возвращает resume with sections."""
         query = (
             select(Resume)
             .options(selectinload(Resume.sections))
@@ -63,6 +71,7 @@ class ResumeRepository:
         resume: Resume,
         title: str,
     ) -> Resume:
+        """Обновляет resume."""
         if title is not None:
             resume.title = title
 
@@ -76,6 +85,7 @@ class ResumeRepository:
         limit: int,
         offset: int,
     ) -> list[Resume]:
+        """Выполняет операцию list resumes."""
         query = (
             select(Resume)
             .where(Resume.user_id == user_id)
@@ -94,6 +104,7 @@ class ResumeRepository:
         resume_id: UUID,
         user_id: UUID,
     ) -> None:
+        """Удаляет resume."""
         resume = Resume(
             resume_id=resume_id,
             user_id=user_id,
@@ -105,6 +116,7 @@ class ResumeRepository:
         resume_id: UUID,
         user_id: UUID,
     ) -> Resume | None:
+        """Выполняет операцию lock resume."""
         query = (
             select(Resume)
             .where(
@@ -125,6 +137,7 @@ class ResumeRepository:
         content: SectionContent.content,
         position: int,
     ) -> ResumeSection:
+        """Выполняет операцию add section."""
         section = ResumeSection(
             resume_id=resume_id,
             section_type=section_type,
@@ -141,6 +154,7 @@ class ResumeRepository:
         section_id: UUID,
         user_id: UUID,
     ) -> ResumeSection | None:
+        """Возвращает section."""
         query = (
             select(ResumeSection)
             .join(Resume)
@@ -157,6 +171,7 @@ class ResumeRepository:
     async def update_section(
         self, section: ResumeSection, content: dict[str, Any]
     ) -> ResumeSection:
+        """Обновляет section."""
         if content is not None:
             section.content = content
 
@@ -168,6 +183,7 @@ class ResumeRepository:
         self,
         resume_id: UUID,
     ) -> int:
+        """Возвращает next position."""
         query = select(func.max(ResumeSection.position)).where(
             ResumeSection.resume_id == resume_id
         )
@@ -183,6 +199,7 @@ class ResumeRepository:
         resume_id: UUID,
         user_id: UUID,
     ) -> int | None:
+        """Возвращает next position and lock resume."""
         resume = await self.lock_resume(resume_id, user_id)
         if resume is None:
             return None

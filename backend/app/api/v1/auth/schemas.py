@@ -1,3 +1,5 @@
+"""Содержит компоненты модуля schemas."""
+
 import re
 from uuid import UUID
 
@@ -5,6 +7,8 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
 class RegisterRequest(BaseModel):
+    """Представляет сущность RegisterRequest."""
+
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
 
@@ -14,6 +18,7 @@ class RegisterRequest(BaseModel):
         cls,
         value: str,
     ) -> str:
+        """Проверяет password."""
         if len(value) < 8:
             raise ValueError("Password too short")
 
@@ -34,21 +39,29 @@ class RegisterRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
+    """Представляет сущность LoginRequest."""
+
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
 
 
 class TokenResponse(BaseModel):
+    """Представляет сущность TokenResponse."""
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
 
 
 class RefreshRequest(BaseModel):
+    """Представляет сущность RefreshRequest."""
+
     refresh_token: str
 
 
 class UserResponse(BaseModel):
+    """Представляет сущность UserResponse."""
+
     id: UUID
     email: EmailStr
 
