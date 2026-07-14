@@ -9,7 +9,6 @@ from sqlalchemy.orm import selectinload
 
 from app.models.resume import Resume
 from app.models.resume_section import ResumeSection, SectionType
-from app.schemas.section import SectionContent
 
 
 class ResumeRepository:
@@ -134,7 +133,7 @@ class ResumeRepository:
         self,
         resume_id: UUID,
         section_type: SectionType,
-        content: SectionContent.content,
+        content: dict[str, Any],
         position: int,
     ) -> ResumeSection:
         """Выполняет операцию add section."""

@@ -218,7 +218,7 @@ class ResumeService:
             section = await self.repository.add_section(
                 resume_id=resume_id,
                 section_type=data.section.section_type,
-                content=data.section.content,
+                content=data.section.content.model_dump(mode="json"),
                 position=position,
             )
 

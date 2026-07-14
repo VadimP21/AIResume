@@ -49,7 +49,7 @@ async def test_add_section_uses_first_position() -> None:
     repository.add_section.assert_awaited_once_with(
         resume_id=resume_id,
         section_type=SectionType.SUMMARY,
-        content=SummaryContent(text="Summary"),
+        content={"text": "Summary"},
         position=1,
     )
     repository.session.commit.assert_awaited_once_with()
