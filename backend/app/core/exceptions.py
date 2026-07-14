@@ -28,6 +28,12 @@ class ValidationException(AppException):
     pass
 
 
+class ServiceUnavailableException(AppException):
+    """Представляет временную недоступность внешнего сервиса или зависимости."""
+
+    pass
+
+
 async def app_exception_handler(
     request: Request,
     exc: AppException,
@@ -40,7 +46,9 @@ async def app_exception_handler(
     )
 
     status_code = (
-        status.HTTP_422_UNPROCESSABLE_CONTENT
+        status.HTTP_503_SERVICE_UNAVAILABLE
+        if isinstance(exc, ServiceUnavailableException)
+        else status.HTTP_422_UNPROCESSABLE_CONTENT
         if isinstance(exc, ValidationException)
         else status.HTTP_404_NOT_FOUND
         if isinstance(exc, NotFoundException)

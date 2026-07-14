@@ -7,15 +7,22 @@ from typing import Any, cast
 from docx import Document
 from docx.shared import Pt
 
+from app.core.exceptions import ServiceUnavailableException
+
+PDF_EXPORT_UNAVAILABLE_MESSAGE = "PDF export is temporarily unavailable"
+
 
 class ResumeDocumentRenderer:
     """Рендерит единый шаблон резюме в поддерживаемые форматы."""
 
     def render_pdf(self, resume: Any) -> bytes:
         """Возвращает PDF представление резюме."""
-        from weasyprint import HTML  # type: ignore[import-untyped]
+        try:
+            from weasyprint import HTML  # type: ignore[import-untyped]
 
-        return cast(bytes, HTML(string=self._render_html(resume)).write_pdf())
+            return cast(bytes, HTML(string=self._render_html(resume)).write_pdf())
+        except OSError as exc:
+            raise ServiceUnavailableException(PDF_EXPORT_UNAVAILABLE_MESSAGE) from exc
 
     def render_docx(self, resume: Any) -> bytes:
         """Возвращает DOCX представление резюме."""

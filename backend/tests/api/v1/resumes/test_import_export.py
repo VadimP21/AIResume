@@ -14,6 +14,7 @@ from app.api.v1.resumes.router import router
 from app.core.exceptions import (
     AppException,
     NotFoundException,
+    ServiceUnavailableException,
     ValidationException,
     app_exception_handler,
 )
@@ -78,6 +79,22 @@ def test_export_returns_pdf_attachment() -> None:
     assert response.headers["content-type"].startswith("application/pdf")
     assert "attachment;" in response.headers["content-disposition"]
     assert response.content == b"pdf"
+
+
+def test_export_returns_503_when_pdf_renderer_is_unavailable() -> None:
+    """Не раскрывает системную ошибку PDF-рендера клиенту."""
+    service = SimpleNamespace(
+        export_resume=AsyncMock(
+            side_effect=ServiceUnavailableException(
+                "PDF export is temporarily unavailable"
+            )
+        )
+    )
+    with TestClient(make_app(service)) as client:
+        response = client.get(f"/resumes/{uuid4()}/export?format=pdf")
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "PDF export is temporarily unavailable"}
 
 
 def test_export_hides_resume_of_another_user() -> None:

@@ -114,6 +114,11 @@ backend/
 * Docker Compose
 * uv
 
+Для локального PDF-экспорта в Windows установите MSYS2 и Pango командой
+`pacman -S mingw-w64-x86_64-pango` в оболочке MSYS2. Перед запуском API
+задайте `$env:WEASYPRINT_DLL_DIRECTORIES = "C:\msys64\mingw64\bin"` и
+проверьте окружение командой `uv run python -m weasyprint --info`.
+
 ---
 
 # Install uv

@@ -32,6 +32,19 @@
 Перед запуском Docker создать `.env.docker` из `.env.docker.example` и заменить
 все значения `CHANGE_ME_*`.
 
+### PDF-экспорт в Windows
+
+WeasyPrint требует нативные библиотеки Pango. Установите MSYS2, затем
+выполните `pacman -S mingw-w64-x86_64-pango` в его оболочке. Перед запуском
+API в PowerShell выполните:
+
+```powershell
+$env:WEASYPRINT_DLL_DIRECTORIES = "C:\msys64\mingw64\bin"
+uv run python -m weasyprint --info
+```
+
+Задайте эту переменную в окружении процесса API или конфигурации запуска IDE.
+
 ```powershell
 docker compose up -d
 uv run alembic upgrade head
