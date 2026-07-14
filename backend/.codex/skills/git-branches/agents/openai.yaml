@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git Branches"
+  short_description: "Безопасное управление Git-ветками"
+  default_prompt: "Use $git-branches to safely merge the current branch into master."
