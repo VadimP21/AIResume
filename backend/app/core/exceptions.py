@@ -22,6 +22,12 @@ class NotFoundException(AppException):
     pass
 
 
+class ValidationException(AppException):
+    """Представляет ошибку валидации бизнес-данных."""
+
+    pass
+
+
 async def app_exception_handler(
     request: Request,
     exc: AppException,
@@ -30,11 +36,19 @@ async def app_exception_handler(
     logger.error(
         "application_error",
         message=exc.message,
-        request_id=request.state.request_id,
+        request_id=getattr(request.state, "request_id", None),
+    )
+
+    status_code = (
+        status.HTTP_422_UNPROCESSABLE_CONTENT
+        if isinstance(exc, ValidationException)
+        else status.HTTP_404_NOT_FOUND
+        if isinstance(exc, NotFoundException)
+        else status.HTTP_400_BAD_REQUEST
     )
 
     return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
+        status_code=status_code,
         content={
             "detail": exc.message,
         },

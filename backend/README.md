@@ -42,7 +42,6 @@ Built with:
 - AI resume generation
 - Cover letter generation
 - ATS score checker
-- PDF/DOCX export
 - Job matching
 - Resume templates
 - AI critique system
@@ -171,6 +170,11 @@ REFRESH_TOKEN_EXPIRE_SECONDS=604800
 REDIS_PASSWORD=
 
 CORS_ORIGINS=["http://localhost:3000"]
+
+# Required only for resume import
+OPENAI_API_KEY=
+OPENAI_MODEL=
+RESUME_IMPORT_MAX_FILE_SIZE=5242880
 ```
 
 `POST /api/v1/auth/fake_auth` регистрируется только при
@@ -311,7 +315,14 @@ POST   /api/v1/resumes
 GET    /api/v1/resumes/{id}
 PATCH  /api/v1/resumes/{id}
 DELETE /api/v1/resumes/{id}
+GET    /api/v1/resumes/{id}/export?format=pdf|docx
+POST   /api/v1/resumes/import
 ```
+
+`POST /api/v1/resumes/import` принимает текстовые PDF и DOCX до 5 MiB и
+создаёт новое резюме. Для него требуются `OPENAI_API_KEY` и `OPENAI_MODEL`.
+Исходный файл не сохраняется. `GET /api/v1/resumes/{id}/export` возвращает
+единый ATS-friendly документ PDF или DOCX.
 
 ---
 

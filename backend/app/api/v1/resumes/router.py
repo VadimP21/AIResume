@@ -1,15 +1,17 @@
 """Содержит компоненты модуля router."""
 
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, File, Query, UploadFile
+from fastapi.responses import Response
 from starlette import status
 
 from app.api.v1.auth.dependencies import get_current_user
 from app.api.v1.resumes.dependencies import (
     get_resume_service,
 )
+from app.core.config import settings
 from app.models.user import User
 from app.schemas.resume import (
     ResumeCreateSchema,
@@ -25,6 +27,50 @@ router = APIRouter(
     prefix="/resumes",
     tags=["Resumes"],
 )
+
+EXPORT_MEDIA_TYPES = {
+    "pdf": "application/pdf",
+    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+}
+
+
+@router.post(
+    "/import",
+    response_model=ResumeResponseSchema,
+    status_code=status.HTTP_201_CREATED,
+)
+async def import_resume(
+    file: Annotated[UploadFile, File()],
+    service: Annotated[ResumeService, Depends(get_resume_service)],
+    current_user: User = Depends(get_current_user),
+):
+    """Импортирует новое резюме из PDF или DOCX."""
+    content = await file.read(settings.RESUME_IMPORT_MAX_FILE_SIZE + 1)
+    return await service.import_resume(
+        user_id=current_user.id,
+        filename=file.filename or "resume",
+        content=content,
+    )
+
+
+@router.get("/{resume_id}/export")
+async def export_resume(
+    resume_id: UUID,
+    format: Literal["pdf", "docx"],
+    current_user: User = Depends(get_current_user),
+    service: ResumeService = Depends(get_resume_service),
+) -> Response:
+    """Экспортирует резюме текущего пользователя."""
+    content, filename = await service.export_resume(
+        resume_id=resume_id,
+        user_id=current_user.id,
+        export_format=format,
+    )
+    return Response(
+        content=content,
+        media_type=EXPORT_MEDIA_TYPES[format],
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.post(
