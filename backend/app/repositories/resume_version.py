@@ -34,14 +34,31 @@ class ResumeVersionRepository:
     async def list_versions(
         self,
         resume_id: UUID,
+        limit: int,
+        offset: int,
     ) -> list[ResumeVersion]:
         """Выполняет операцию list versions."""
         query = (
             select(ResumeVersion)
             .where(ResumeVersion.resume_id == resume_id)
             .order_by(ResumeVersion.created_at.desc())
+            .limit(limit)
+            .offset(offset)
         )
 
         result = await self.session.execute(query)
 
         return list(result.scalars().all())
+
+    async def get_version(
+        self,
+        resume_id: UUID,
+        version_id: UUID,
+    ) -> ResumeVersion | None:
+        """Возвращает версию резюме по идентификатору."""
+        query = select(ResumeVersion).where(
+            ResumeVersion.id == version_id,
+            ResumeVersion.resume_id == resume_id,
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()

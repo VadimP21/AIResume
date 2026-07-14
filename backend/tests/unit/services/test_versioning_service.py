@@ -24,12 +24,7 @@ async def test_create_snapshot_serializes_all_section_types() -> None:
         for index, section_type in enumerate(SectionType, start=1)
     ]
     version = SimpleNamespace()
-    repository = SimpleNamespace(
-        create_version=AsyncMock(return_value=version),
-        session=SimpleNamespace(
-            commit=AsyncMock(), refresh=AsyncMock(), rollback=AsyncMock()
-        ),
-    )
+    repository = SimpleNamespace(create_version=AsyncMock(return_value=version))
     resume = SimpleNamespace(id=resume_id, title="Resume", sections=sections)
 
     result = await VersioningService(repository).create_snapshot(resume)
@@ -39,4 +34,4 @@ async def test_create_snapshot_serializes_all_section_types() -> None:
     assert [section["type"] for section in snapshot["sections"]] == [
         section_type.value for section_type in SectionType
     ]
-    repository.session.commit.assert_awaited_once_with()
+    assert result is version

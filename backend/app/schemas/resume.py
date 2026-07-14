@@ -69,3 +69,19 @@ class ResumeListResponseSchema(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ResumeVersionListResponseSchema(BaseModel):
+    """Представляет краткие сведения о версии резюме."""
+
+    id: UUID
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ResumeVersionResponseSchema(ResumeVersionListResponseSchema):
+    """Представляет полное содержимое версии резюме."""
+
+    resume_id: UUID
+    snapshot: dict[str, object]

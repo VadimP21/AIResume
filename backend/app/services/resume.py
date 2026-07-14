@@ -6,7 +6,11 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from app.core.exceptions import NotFoundException, ValidationException
+from app.models.resume import Resume
+from app.models.resume_section import SectionType
+from app.models.resume_version import ResumeVersion
 from app.repositories.resume import ResumeRepository
+from app.repositories.resume_version import ResumeVersionRepository
 from app.schemas.resume import (
     ResumeCreateSchema,
     ResumeSectionCreateSchema,
@@ -19,6 +23,7 @@ if TYPE_CHECKING:
     from app.services.resume_ai_parser import ResumeAIParser
     from app.services.resume_document import ResumeDocumentRenderer
     from app.services.resume_file import ResumeFileExtractor
+    from app.services.versioning import VersioningService
 
 
 class ResumeService:
@@ -30,12 +35,15 @@ class ResumeService:
         extractor: "ResumeFileExtractor | None" = None,
         parser: "ResumeAIParser | None" = None,
         renderer: "ResumeDocumentRenderer | None" = None,
+        versioning: "VersioningService | None" = None,
     ):
         """Инициализирует экземпляр."""
         self.repository = repository
         self.extractor = extractor
         self.parser = parser
         self.renderer = renderer
+        self.versioning = versioning
+        self.version_repository = ResumeVersionRepository(repository.session)
 
     async def create_resume(
         self,
@@ -49,7 +57,7 @@ class ResumeService:
                 title=data.title,
             )
             resume_id = resume.id
-
+            await self._create_snapshot(resume)
             await self.repository.session.commit()
             return await self.repository.get_resume_with_sections(
                 user_id=user_id, resume_id=resume_id
@@ -94,7 +102,7 @@ class ResumeService:
                 resume=resume,
                 title=data.title,
             )
-
+            await self._create_snapshot_by_id(resume_id, user_id)
             await self.repository.session.commit()
             await self.repository.session.refresh(resume)
 
@@ -148,6 +156,7 @@ class ResumeService:
                 content=section.content.model_dump(mode="json"),
                 position=position,
             )
+        await self._create_snapshot_by_id(resume.id, user_id)
         await self.repository.session.commit()
         return await self.repository.get_resume_with_sections(user_id, resume.id)
 
@@ -221,7 +230,7 @@ class ResumeService:
                 content=data.section.content.model_dump(mode="json"),
                 position=position,
             )
-
+            await self._create_snapshot_by_id(resume_id, user_id)
             await self.repository.session.commit()
             await self.repository.session.refresh(section)
             return section
@@ -249,7 +258,7 @@ class ResumeService:
                 section,
                 data.content,
             )
-
+            await self._create_snapshot_by_id(section.resume_id, user_id)
             await self.repository.session.commit()
             await self.repository.session.refresh(section)
 
@@ -258,3 +267,80 @@ class ResumeService:
         except Exception:
             await self.repository.session.rollback()
             raise
+
+    async def list_versions(
+        self,
+        resume_id: UUID,
+        user_id: UUID,
+        limit: int,
+        offset: int,
+    ) -> list[ResumeVersion]:
+        """Возвращает историю версий резюме владельца."""
+        await self._get_resume_for_snapshot(resume_id, user_id)
+        return await self.version_repository.list_versions(resume_id, limit, offset)
+
+    async def get_version(
+        self,
+        resume_id: UUID,
+        version_id: UUID,
+        user_id: UUID,
+    ) -> ResumeVersion:
+        """Возвращает версию резюме владельца."""
+        await self._get_resume_for_snapshot(resume_id, user_id)
+        version = await self.version_repository.get_version(resume_id, version_id)
+        if version is None:
+            raise NotFoundException("Resume version not found")
+        return version
+
+    async def restore_version(
+        self,
+        resume_id: UUID,
+        version_id: UUID,
+        user_id: UUID,
+    ) -> Resume:
+        """Восстанавливает резюме из сохранённой версии."""
+        resume = await self._get_resume_for_snapshot(resume_id, user_id)
+        version = await self.version_repository.get_version(resume_id, version_id)
+        if version is None:
+            raise NotFoundException("Resume version not found")
+
+        try:
+            await self._create_snapshot(resume)
+            snapshot_resume = version.snapshot["resume"]
+            await self.repository.update_resume(resume, snapshot_resume["title"])
+            await self.repository.delete_sections(resume.id)
+            for section in version.snapshot["sections"]:
+                await self.repository.add_section(
+                    resume_id=resume.id,
+                    section_type=SectionType(section["type"]),
+                    content=section["content"],
+                    position=section["position"],
+                )
+            await self.repository.session.commit()
+            return await self._get_resume_for_snapshot(resume_id, user_id)
+        except Exception:
+            await self.repository.session.rollback()
+            raise
+
+    async def _get_resume_for_snapshot(
+        self,
+        resume_id: UUID,
+        user_id: UUID,
+    ) -> Resume:
+        """Возвращает резюме владельца с загруженными секциями."""
+        resume = await self.repository.get_resume_with_sections(resume_id, user_id)
+        if resume is None:
+            raise NotFoundException("Resume not found")
+        return resume
+
+    async def _create_snapshot(self, resume: Resume) -> None:
+        """Создаёт снимок резюме при включённом версионировании."""
+        if self.versioning is not None:
+            await self.versioning.create_snapshot(resume)
+
+    async def _create_snapshot_by_id(self, resume_id: UUID, user_id: UUID) -> None:
+        """Создаёт снимок резюме с секциями при включённом версионировании."""
+        if self.versioning is None:
+            return
+        resume = await self._get_resume_for_snapshot(resume_id, user_id)
+        await self.versioning.create_snapshot(resume)

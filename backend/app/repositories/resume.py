@@ -3,7 +3,7 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -177,6 +177,12 @@ class ResumeRepository:
         await self.session.flush()
 
         return section
+
+    async def delete_sections(self, resume_id: UUID) -> None:
+        """Удаляет все секции резюме."""
+        await self.session.execute(
+            delete(ResumeSection).where(ResumeSection.resume_id == resume_id)
+        )
 
     async def get_next_position(
         self,

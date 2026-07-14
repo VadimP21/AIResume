@@ -56,3 +56,63 @@ async def test_delete_resume_rolls_back_when_commit_fails() -> None:
         await service.delete_resume(uuid4(), uuid4())
 
     repository.session.rollback.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
+async def test_create_resume_creates_snapshot_in_same_transaction() -> None:
+    """Проверяет создание snapshot вместе с резюме."""
+    resume = SimpleNamespace(id=uuid4(), sections=[])
+    repository = SimpleNamespace(
+        create_resume=AsyncMock(return_value=resume),
+        get_resume_with_sections=AsyncMock(return_value=resume),
+        session=SimpleNamespace(commit=AsyncMock(), rollback=AsyncMock()),
+    )
+    versioning = SimpleNamespace(create_snapshot=AsyncMock())
+    service = ResumeService(repository, versioning=versioning)
+
+    await service.create_resume(uuid4(), SimpleNamespace(title="Resume"))
+
+    versioning.create_snapshot.assert_awaited_once_with(resume)
+    repository.session.commit.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
+async def test_restore_version_saves_current_state_before_replacing_sections() -> None:
+    """Проверяет сохранение текущего состояния перед восстановлением."""
+    resume_id = uuid4()
+    version_id = uuid4()
+    user_id = uuid4()
+    resume = SimpleNamespace(id=resume_id, title="Current", sections=[])
+    version = SimpleNamespace(
+        snapshot={
+            "resume": {"id": str(resume_id), "title": "Previous"},
+            "sections": [
+                {
+                    "id": str(uuid4()),
+                    "type": "summary",
+                    "position": 1,
+                    "content": {"text": "Restored"},
+                }
+            ],
+        }
+    )
+    repository = SimpleNamespace(
+        get_resume_with_sections=AsyncMock(return_value=resume),
+        update_resume=AsyncMock(),
+        delete_sections=AsyncMock(),
+        add_section=AsyncMock(),
+        session=SimpleNamespace(commit=AsyncMock(), rollback=AsyncMock()),
+    )
+    versioning = SimpleNamespace(create_snapshot=AsyncMock())
+    service = ResumeService(repository, versioning=versioning)
+    service.version_repository = SimpleNamespace(
+        get_version=AsyncMock(return_value=version)
+    )
+
+    result = await service.restore_version(resume_id, version_id, user_id)
+
+    assert result is resume
+    versioning.create_snapshot.assert_awaited_once_with(resume)
+    repository.delete_sections.assert_awaited_once_with(resume_id)
+    repository.add_section.assert_awaited_once()
+    repository.session.commit.assert_awaited_once_with()

@@ -1,6 +1,7 @@
 """Содержит компоненты модуля versioning."""
 
 from app.models.resume import Resume
+from app.models.resume_version import ResumeVersion
 from app.repositories.resume_version import (
     ResumeVersionRepository,
 )
@@ -19,7 +20,7 @@ class VersioningService:
     async def create_snapshot(
         self,
         resume: Resume,
-    ):
+    ) -> ResumeVersion:
         """Создаёт snapshot."""
         snapshot = {
             "resume": {
@@ -37,14 +38,7 @@ class VersioningService:
             ],
         }
 
-        try:
-            version = await self.repository.create_version(
-                resume_id=resume.id,
-                snapshot=snapshot,
-            )
-            await self.repository.session.commit()
-            await self.repository.session.refresh(version)
-            return version
-        except Exception:
-            await self.repository.session.rollback()
-            raise
+        return await self.repository.create_version(
+            resume_id=resume.id,
+            snapshot=snapshot,
+        )

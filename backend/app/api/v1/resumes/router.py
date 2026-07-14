@@ -12,6 +12,8 @@ from app.api.v1.resumes.dependencies import (
     get_resume_service,
 )
 from app.core.config import settings
+from app.models.resume import Resume
+from app.models.resume_version import ResumeVersion
 from app.models.user import User
 from app.schemas.resume import (
     ResumeCreateSchema,
@@ -20,6 +22,8 @@ from app.schemas.resume import (
     ResumeSectionResponseSchema,
     ResumeSectionUpdateSchema,
     ResumeUpdateSchema,
+    ResumeVersionListResponseSchema,
+    ResumeVersionResponseSchema,
 )
 from app.services.resume import ResumeService
 
@@ -102,6 +106,49 @@ async def get_resume(
 ):
     """Возвращает resume."""
     return await service.get_resume(resume_id, current_user.id)
+
+
+@router.get(
+    "/{resume_id}/versions",
+    response_model=list[ResumeVersionListResponseSchema],
+)
+async def list_versions(
+    resume_id: UUID,
+    current_user: User = Depends(get_current_user),
+    service: ResumeService = Depends(get_resume_service),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+) -> list[ResumeVersion]:
+    """Возвращает историю версий резюме владельца."""
+    return await service.list_versions(resume_id, current_user.id, limit, offset)
+
+
+@router.get(
+    "/{resume_id}/versions/{version_id}",
+    response_model=ResumeVersionResponseSchema,
+)
+async def get_version(
+    resume_id: UUID,
+    version_id: UUID,
+    current_user: User = Depends(get_current_user),
+    service: ResumeService = Depends(get_resume_service),
+) -> ResumeVersion:
+    """Возвращает полное содержимое версии резюме владельца."""
+    return await service.get_version(resume_id, version_id, current_user.id)
+
+
+@router.post(
+    "/{resume_id}/versions/{version_id}/restore",
+    response_model=ResumeResponseSchema,
+)
+async def restore_version(
+    resume_id: UUID,
+    version_id: UUID,
+    current_user: User = Depends(get_current_user),
+    service: ResumeService = Depends(get_resume_service),
+) -> Resume:
+    """Восстанавливает резюме из версии владельца."""
+    return await service.restore_version(resume_id, version_id, current_user.id)
 
 
 @router.patch(

@@ -39,7 +39,7 @@ async def test_resume_version_is_persisted_and_read(
         await session.refresh(resume, attribute_names=["sections"])
         repository = ResumeVersionRepository(session)
         version = await VersioningService(repository).create_snapshot(resume)
-        versions = await repository.list_versions(resume.id)
+        versions = await repository.list_versions(resume.id, limit=20, offset=0)
 
         assert versions == [version]
         assert version.snapshot["sections"][0]["type"] == "summary"
