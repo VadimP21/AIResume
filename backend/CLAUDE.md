@@ -85,8 +85,13 @@ app/
     main_offline.py
 
     api/
-        routers
         dependencies
+        router.py
+        v1/
+            auth/
+            health/
+            resumes/
+            users/
 
     services/
 
@@ -99,8 +104,6 @@ app/
     db/
 
     middleware/
-
-    middeleware/  # legacy directory; do not add new modules here
 
     core/
 
@@ -219,19 +222,9 @@ Transactions belong to Service layer.
 
 Repository never calls commit().
 
-Preferred pattern:
-
-```
-create()
-
-flush()
-
-refresh()
-
-commit()
-```
-
-Only Service manages transaction boundaries.
+Use `flush()` only when the generated values are required before commit;
+use `refresh()` only when in-memory data must be reloaded. Only Service
+manages transaction boundaries and calls `commit()` or `rollback()`.
 
 ---
 
@@ -508,8 +501,8 @@ Maintainability
 
 ## Known deviations from target architecture
 
-Текущие отклонения и технический долг перечислены в карточках `001`–`010` в
-`docs/backlog/`. Они не делают целевые правила выше неактуальными: сначала
+Текущие отклонения и технический долг перечислены в карточках `docs/backlog/`.
+Они не делают целевые правила выше неактуальными: сначала
 исправляется реализация, затем обновляется статус карточки.
 
 ---
@@ -523,6 +516,8 @@ Maintainability
 - `docs/workflows/migrations.md` — миграции;
 - `docs/workflows/code-review.md` — code review.
 - `docs/workflows/commits.md` — создание Git-коммитов.
+- `docs/workflows/git-branches.md` — работа с Git-ветками.
+- `docs/workflows/docker.md` — работа с Docker.
 
 ---
 

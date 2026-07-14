@@ -15,10 +15,7 @@ stack = [
 ]
 
 [testing]
-command = "pytest"
+command = "uv run pytest"
 
 [linter]
-command = "ruff check ."
-
-[migrations]
-command = "alembic upgrade head"
+command = "uv run ruff check ."

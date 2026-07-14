@@ -84,6 +84,7 @@ Always:
 - follow the existing architecture
 - follow the existing code style
 - write readable code
+- писать короткие достаточные docstring на русском языке для каждого Python-модуля, класса и функции
 - use type hints
 - keep functions and modules focused
 - minimize the scope of changes
