@@ -5,6 +5,7 @@ from typing import Literal
 
 from pydantic import (
     EmailStr,
+    Field,
     PostgresDsn,
     RedisDsn,
     SecretStr,
@@ -102,11 +103,23 @@ class Settings(BaseSettings):
     ]
 
     # =========================================================
-    # OPENAI
+    # AI
     # =========================================================
 
-    OPENAI_API_KEY: SecretStr | None = None
-    OPENAI_MODEL: str | None = None
+    AI_PROVIDER: Literal["gemini", "deepseek", "gigachat"] = "gemini"
+    AI_REQUEST_TIMEOUT_SECONDS: float = Field(default=30, gt=0, le=300)
+
+    GEMINI_API_KEY: SecretStr | None = None
+    GEMINI_MODEL: str | None = None
+
+    DEEPSEEK_API_KEY: SecretStr | None = None
+    DEEPSEEK_MODEL: str | None = None
+    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com/v1"
+
+    GIGACHAT_AUTH_KEY: SecretStr | None = None
+    GIGACHAT_MODEL: str | None = None
+    GIGACHAT_BASE_URL: str = "https://gigachat.devices.sberbank.ru/api/v1"
+
     RESUME_IMPORT_MAX_FILE_SIZE: int = 5 * 1024 * 1024
 
     # =========================================================

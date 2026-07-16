@@ -4,7 +4,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from app.core.exceptions import ValidationException
+from app.core.exceptions import ServiceUnavailableException, ValidationException
+from app.services.ai.exceptions import AIProviderError
 from app.services.resume_ai_parser import ResumeAIParser
 
 
@@ -26,14 +27,10 @@ def valid_response() -> str:
 async def test_parses_valid_structured_model_response() -> None:
     """Преобразует валидный ответ модели в DTO."""
     client = AsyncMock()
-    client.chat.completions.create.return_value.choices = [
-        type(
-            "Choice",
-            (),
-            {"message": type("Message", (), {"content": valid_response()})()},
-        )()
-    ]
-    parser = ResumeAIParser(client=client, model="test-model")
+    client.provider = "gemini"
+    client.model = "test-model"
+    client.generate_json.return_value = valid_response()
+    parser = ResumeAIParser(client=client)
 
     result = await parser.parse("resume text")
 
@@ -48,21 +45,37 @@ async def test_parses_valid_structured_model_response() -> None:
 async def test_rejects_invalid_model_response() -> None:
     """Отклоняет ответ модели, не соответствующий контракту."""
     client = AsyncMock()
-    client.chat.completions.create.return_value.choices = [
-        type("Choice", (), {"message": type("Message", (), {"content": "{}"})()})()
-    ]
-    parser = ResumeAIParser(client=client, model="test-model")
+    client.provider = "gemini"
+    client.model = "test-model"
+    client.generate_json.return_value = "{}"
+    parser = ResumeAIParser(client=client)
 
     with pytest.raises(ValidationException, match="AI response"):
         await parser.parse("resume text")
 
 
 @pytest.mark.asyncio
-async def test_hides_provider_error() -> None:
-    """Не раскрывает техническую ошибку провайдера."""
+async def test_rejects_empty_model_response() -> None:
+    """Отклоняет пустой ответ модели как некорректный JSON."""
     client = AsyncMock()
-    client.chat.completions.create.side_effect = RuntimeError("provider secret")
-    parser = ResumeAIParser(client=client, model="test-model")
+    client.provider = "gemini"
+    client.model = "test-model"
+    client.generate_json.return_value = ""
+    parser = ResumeAIParser(client=client)
 
-    with pytest.raises(ValidationException, match="Unable to parse resume"):
+    with pytest.raises(ValidationException, match="AI response"):
+        await parser.parse("resume text")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("category", ["authentication", "timeout", "unavailable"])
+async def test_maps_provider_error_to_service_unavailable(category: str) -> None:
+    """Преобразует ошибку провайдера в безопасный ответ 503."""
+    client = AsyncMock()
+    client.provider = "gemini"
+    client.model = "test-model"
+    client.generate_json.side_effect = AIProviderError(category)
+    parser = ResumeAIParser(client=client)
+
+    with pytest.raises(ServiceUnavailableException, match="temporarily unavailable"):
         await parser.parse("resume text")

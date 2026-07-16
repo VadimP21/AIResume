@@ -5,7 +5,11 @@ import re
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from app.core.exceptions import NotFoundException, ValidationException
+from app.core.exceptions import (
+    NotFoundException,
+    ServiceUnavailableException,
+    ValidationException,
+)
 from app.models.resume import Resume
 from app.models.resume_section import SectionType
 from app.models.resume_version import ResumeVersion
@@ -18,6 +22,7 @@ from app.schemas.resume import (
     ResumeUpdateSchema,
 )
 from app.schemas.resume_import import ImportedResumeSchema
+from app.services.resume_ai_parser import RESUME_IMPORT_UNAVAILABLE_MESSAGE
 
 if TYPE_CHECKING:
     from app.services.resume_ai_parser import ResumeAIParser
@@ -132,8 +137,10 @@ class ResumeService:
         content: bytes,
     ):
         """Создаёт черновик резюме из импортированного файла."""
-        if self.extractor is None or self.parser is None:
+        if self.extractor is None:
             raise ValidationException("Resume import is not configured")
+        if self.parser is None:
+            raise ServiceUnavailableException(RESUME_IMPORT_UNAVAILABLE_MESSAGE)
         try:
             text = await asyncio.to_thread(self.extractor.extract, filename, content)
             imported = await self.parser.parse(text)

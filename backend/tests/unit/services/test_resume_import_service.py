@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pytest
 
-from app.core.exceptions import ValidationException
+from app.core.exceptions import ServiceUnavailableException, ValidationException
 from app.schemas.resume_import import ImportedResumeSchema
 from app.services.resume import ResumeService
 
@@ -72,3 +72,16 @@ async def test_import_rolls_back_when_parser_fails() -> None:
         await service.import_resume(uuid4(), "resume.docx", b"content")
 
     repository.session.rollback.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
+async def test_import_returns_service_unavailable_when_ai_is_not_configured() -> None:
+    """Возвращает 503-сценарий, если активный AI-провайдер не настроен."""
+    repository = SimpleNamespace(session=SimpleNamespace(rollback=AsyncMock()))
+    extractor = SimpleNamespace(extract=lambda _name, _data: "source text")
+    service = ResumeService(repository, extractor=extractor, parser=None)
+
+    with pytest.raises(ServiceUnavailableException, match="temporarily unavailable"):
+        await service.import_resume(uuid4(), "resume.docx", b"content")
+
+    repository.session.rollback.assert_not_awaited()

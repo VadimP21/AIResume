@@ -142,3 +142,28 @@ def test_import_returns_422_for_invalid_file() -> None:
 
     assert response.status_code == 422
     assert response.json() == {"detail": "Unsupported file format"}
+
+
+def test_import_returns_503_when_ai_provider_is_unavailable() -> None:
+    """Сохраняет контракт 503 при недоступности AI-провайдера."""
+    service = SimpleNamespace(
+        import_resume=AsyncMock(
+            side_effect=ServiceUnavailableException(
+                "Resume import is temporarily unavailable"
+            )
+        )
+    )
+    with TestClient(make_app(service)) as client:
+        response = client.post(
+            "/resumes/import",
+            files={
+                "file": (
+                    "resume.docx",
+                    b"document",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                )
+            },
+        )
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Resume import is temporarily unavailable"}

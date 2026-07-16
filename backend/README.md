@@ -177,8 +177,20 @@ REDIS_PASSWORD=
 CORS_ORIGINS=["http://localhost:3000"]
 
 # Required only for resume import
-OPENAI_API_KEY=
-OPENAI_MODEL=
+AI_PROVIDER=gemini
+AI_REQUEST_TIMEOUT_SECONDS=30
+
+GEMINI_API_KEY=
+GEMINI_MODEL=
+
+DEEPSEEK_API_KEY=
+DEEPSEEK_MODEL=
+DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+
+GIGACHAT_AUTH_KEY=
+GIGACHAT_MODEL=
+GIGACHAT_BASE_URL=https://gigachat.devices.sberbank.ru/api/v1
+
 RESUME_IMPORT_MAX_FILE_SIZE=5242880
 ```
 
@@ -186,6 +198,18 @@ RESUME_IMPORT_MAX_FILE_SIZE=5242880
 `APP_ENV=development|test` и `ENABLE_FAKE_AUTH=true`. При включении также
 обязательны `FAKE_AUTH_EMAIL` и `FAKE_AUTH_PASSWORD`. В staging и production
 включение endpoint запрещено конфигурацией.
+
+### AI-провайдер для импорта резюме
+
+`POST /api/v1/resumes/import` использует одного провайдера, выбранного через
+`AI_PROVIDER`: `gemini` (по умолчанию), `deepseek` или `gigachat`. Заполняйте
+ключ и модель только активного провайдера; переключение применяется после
+перезапуска приложения. Для GigaChat `GIGACHAT_AUTH_KEY` — ключ авторизации,
+а access token получается и кэшируется приложением автоматически.
+
+При отсутствии конфигурации активного провайдера, таймауте, ошибке авторизации
+или ответе провайдера 5xx endpoint возвращает `503 Service Unavailable` без
+деталей внешнего сервиса. Fallback между провайдерами отсутствует.
 
 ---
 
@@ -325,7 +349,7 @@ POST   /api/v1/resumes/import
 ```
 
 `POST /api/v1/resumes/import` принимает текстовые PDF и DOCX до 5 MiB и
-создаёт новое резюме. Для него требуются `OPENAI_API_KEY` и `OPENAI_MODEL`.
+создаёт новое резюме. Для него требуются настройки активного AI-провайдера.
 Исходный файл не сохраняется. `GET /api/v1/resumes/{id}/export` возвращает
 единый ATS-friendly документ PDF или DOCX.
 
