@@ -12,6 +12,6 @@ redis_client = Redis(
 )
 
 
-async def get_redis():
+async def get_redis() -> Redis[str]:
     """Возвращает redis."""
     return redis_client

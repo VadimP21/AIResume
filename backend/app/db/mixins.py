@@ -1,10 +1,10 @@
 """Содержит компоненты модуля mixins."""
 
 from datetime import UTC, datetime
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from sqlalchemy import DateTime
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID as SQLAlchemyUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 
@@ -12,7 +12,7 @@ class UUIDMixin:
     """Представляет сущность UUIDMixin."""
 
     id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True),
+        SQLAlchemyUUID(as_uuid=True),
         primary_key=True,
         default=uuid4,
     )

@@ -38,7 +38,7 @@ class ResumeRepository:
         self,
         user_id: UUID,
         resume_id: UUID,
-    ):
+    ) -> Resume | None:
         """Возвращает resume base."""
         query = (
             select(Resume)
@@ -68,7 +68,7 @@ class ResumeRepository:
     async def update_resume(
         self,
         resume: Resume,
-        title: str,
+        title: str | None,
     ) -> Resume:
         """Обновляет resume."""
         if title is not None:
@@ -96,7 +96,7 @@ class ResumeRepository:
 
         result = await self.session.scalars(query)
 
-        return result.all()
+        return list(result.all())
 
     async def delete_resume(
         self,

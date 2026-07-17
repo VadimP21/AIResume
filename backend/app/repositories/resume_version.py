@@ -1,5 +1,6 @@
 """Содержит компоненты модуля resume_version."""
 
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
@@ -18,7 +19,7 @@ class ResumeVersionRepository:
     async def create_version(
         self,
         resume_id: UUID,
-        snapshot: dict,
+        snapshot: dict[str, Any],
     ) -> ResumeVersion:
         """Создаёт version."""
         version = ResumeVersion(

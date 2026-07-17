@@ -1,6 +1,7 @@
 """Содержит компоненты модуля resume."""
 
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -34,7 +35,7 @@ class ResumeSectionCreateSchema(BaseModel):
 class ResumeSectionUpdateSchema(BaseModel):
     """Представляет сущность ResumeSectionUpdateSchema."""
 
-    content: dict
+    content: dict[str, Any]
 
 
 class ResumeSectionResponseSchema(BaseModel):
@@ -43,7 +44,7 @@ class ResumeSectionResponseSchema(BaseModel):
     id: UUID
     section_type: SectionType
     position: int
-    content: dict
+    content: dict[str, Any]
 
     model_config = ConfigDict(from_attributes=True)
 

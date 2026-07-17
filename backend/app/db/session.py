@@ -1,5 +1,7 @@
 """Содержит компоненты модуля session."""
 
+from collections.abc import AsyncGenerator
+
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -27,7 +29,7 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
-async def get_db():
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Возвращает db."""
     async with AsyncSessionLocal() as session:
         yield session

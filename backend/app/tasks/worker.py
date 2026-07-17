@@ -12,6 +12,6 @@ celery_app = Celery(
 
 
 @celery_app.task
-def ping():
+def ping() -> str:
     """Выполняет операцию ping."""
     return "pong"

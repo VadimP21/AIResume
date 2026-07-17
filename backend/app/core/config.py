@@ -1,7 +1,7 @@
 """Содержит компоненты модуля config."""
 
 from functools import lru_cache
-from typing import Literal
+from typing import Literal, Self
 
 from pydantic import (
     EmailStr,
@@ -135,7 +135,7 @@ class Settings(BaseSettings):
         return value
 
     @model_validator(mode="after")
-    def validate_environment(self):
+    def validate_environment(self) -> Self:
         """Проверяет environment."""
         if self.APP_ENV == "production" and self.DEBUG:
             raise ValueError("DEBUG must be False in production")
@@ -174,7 +174,7 @@ class Settings(BaseSettings):
     # COMPUTED FIELDS
     # =========================================================
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def ASYNC_DATABASE_URL(self) -> PostgresDsn:
         """Выполняет операцию ASYNC DATABASE URL."""
@@ -187,7 +187,7 @@ class Settings(BaseSettings):
             f"{self.POSTGRES_DB}"
         )
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def DATABASE_URL(self) -> PostgresDsn:
         """Выполняет операцию DATABASE URL."""
@@ -200,7 +200,7 @@ class Settings(BaseSettings):
             f"{self.POSTGRES_DB}"
         )
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def REDIS_URL(self) -> RedisDsn:
         """Выполняет операцию REDIS URL."""
@@ -212,7 +212,7 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     """Возвращает settings."""
-    return Settings()
+    return Settings()  # type: ignore[call-arg]
 
 
 settings = get_settings()

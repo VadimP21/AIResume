@@ -1,11 +1,13 @@
 """Содержит компоненты модуля resume_section."""
 
 from enum import StrEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+from uuid import UUID
 
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import ForeignKey, Integer, UniqueConstraint
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as SQLAlchemyUUID
 from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -45,7 +47,7 @@ class ResumeSection(
     )
 
     resume_id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True),
+        SQLAlchemyUUID(as_uuid=True),
         ForeignKey("resumes.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -62,7 +64,7 @@ class ResumeSection(
         default=0,
     )
 
-    content: Mapped[dict] = mapped_column(
+    content: Mapped[dict[str, Any]] = mapped_column(
         MutableDict.as_mutable(JSONB),
         nullable=False,
     )

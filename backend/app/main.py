@@ -66,7 +66,7 @@ app.include_router(api_router)
 
 
 @app.get("/")
-async def root():
+async def root() -> dict[str, str]:
     """Выполняет операцию root."""
     return {
         "status": "ok",

@@ -1,5 +1,7 @@
 """Содержит компоненты модуля exceptions."""
 
+from typing import cast
+
 import structlog
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -36,28 +38,29 @@ class ServiceUnavailableException(AppException):
 
 async def app_exception_handler(
     request: Request,
-    exc: AppException,
-):
+    exc: Exception,
+) -> JSONResponse:
     """Выполняет операцию app exception handler."""
+    app_exception = cast(AppException, exc)
     logger.error(
         "application_error",
-        message=exc.message,
+        message=app_exception.message,
         request_id=getattr(request.state, "request_id", None),
     )
 
     status_code = (
         status.HTTP_503_SERVICE_UNAVAILABLE
-        if isinstance(exc, ServiceUnavailableException)
+        if isinstance(app_exception, ServiceUnavailableException)
         else status.HTTP_422_UNPROCESSABLE_CONTENT
-        if isinstance(exc, ValidationException)
+        if isinstance(app_exception, ValidationException)
         else status.HTTP_404_NOT_FOUND
-        if isinstance(exc, NotFoundException)
+        if isinstance(app_exception, NotFoundException)
         else status.HTTP_400_BAD_REQUEST
     )
 
     return JSONResponse(
         status_code=status_code,
         content={
-            "detail": exc.message,
+            "detail": app_exception.message,
         },
     )

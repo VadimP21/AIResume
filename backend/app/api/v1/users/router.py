@@ -18,6 +18,6 @@ router = APIRouter(
 )
 async def me(
     user: User = Depends(get_current_user),
-):
+) -> User:
     """Выполняет операцию me."""
     return user

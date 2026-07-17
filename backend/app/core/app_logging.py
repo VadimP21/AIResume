@@ -25,7 +25,7 @@ logger.info(
 """
 
 
-def setup_logging():
+def setup_logging() -> None:
     """Выполняет операцию setup logging."""
     structlog.configure(
         processors=[

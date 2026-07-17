@@ -18,6 +18,7 @@ from app.core.security import (
     hash_token,
     verify_password,
 )
+from app.models.user import User
 from app.repositories.user_repository import UserRepository
 
 CONSUME_REFRESH_TOKEN_SCRIPT = """
@@ -49,8 +50,8 @@ class AuthService:
     def __init__(
         self,
         user_repo: UserRepository,
-        redis: Redis,
-    ):
+        redis: Redis[str],
+    ) -> None:
         """Инициализирует экземпляр."""
         self.user_repo = user_repo
         self.redis = redis
@@ -59,7 +60,7 @@ class AuthService:
         self,
         email: str,
         password: str,
-    ):
+    ) -> User:
         """Выполняет операцию register."""
         try:
             email = email.lower().strip()
@@ -85,7 +86,7 @@ class AuthService:
         self,
         email: str,
         password: str,
-    ):
+    ) -> dict[str, str]:
         """Выполняет операцию login."""
         email = email.lower().strip()
         user = await self.user_repo.get_by_email(email)
@@ -135,36 +136,36 @@ class AuthService:
     async def logout(
         self,
         payload: RefreshRequest,
-    ):
+    ) -> None:
         """Выполняет операцию logout."""
-        payload = decode_token(payload.refresh_token)
-        user_id = payload["sub"]
+        token_payload = decode_token(payload.refresh_token)
+        user_id = token_payload["sub"]
         user = await self.user_repo.get_by_id(UUID(user_id))
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User not found",
             )
-        if payload["tv"] != user.token_version:
+        if token_payload["tv"] != user.token_version:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token revoked",
             )
 
-        if payload["type"] != "refresh":
+        if token_payload["type"] != "refresh":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token",
             )
 
-        token_version = payload["tv"]
+        token_version = token_payload["tv"]
         if token_version != user.token_version:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token",
             )
 
-        jti = payload["jti"]
+        jti = token_payload["jti"]
         deleted = await self.redis.delete(f"refresh:{user_id}:{jti}")
 
         if not deleted:
@@ -176,7 +177,7 @@ class AuthService:
     async def refresh_tokens(
         self,
         payload_data: RefreshRequest,
-    ):
+    ) -> dict[str, str]:
         """Выполняет операцию refresh tokens."""
         try:
             payload = decode_token(payload_data.refresh_token)
@@ -262,7 +263,7 @@ class AuthService:
         self,
         email: str,
         password: str,
-    ):
+    ) -> dict[str, str]:
         """Выполняет операцию fake auth."""
         if await self.user_repo.get_by_email(email):
             return await self.login(

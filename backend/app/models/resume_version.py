@@ -1,7 +1,11 @@
 """Содержит компоненты модуля resume_version."""
 
+from typing import Any
+from uuid import UUID
+
 from sqlalchemy import ForeignKey
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as SQLAlchemyUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -14,7 +18,7 @@ class ResumeVersion(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "resume_versions"
 
     resume_id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True),
+        SQLAlchemyUUID(as_uuid=True),
         ForeignKey(
             "resumes.id",
             ondelete="CASCADE",
@@ -23,7 +27,7 @@ class ResumeVersion(Base, UUIDMixin, TimestampMixin):
         index=True,
     )
 
-    snapshot: Mapped[dict] = mapped_column(
+    snapshot: Mapped[dict[str, Any]] = mapped_column(
         JSONB,
         nullable=False,
     )

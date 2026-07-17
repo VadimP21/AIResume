@@ -1,9 +1,12 @@
 """Содержит компоненты модуля request_id."""
 
+from collections.abc import Awaitable, Callable
 from uuid import uuid4
 
 import structlog
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):
@@ -11,9 +14,9 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(
         self,
-        request,
-        call_next,
-    ):
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
         """Выполняет операцию dispatch."""
         request_id = request.headers.get(
             "X-Request-ID",

@@ -1,9 +1,12 @@
 """Содержит компоненты модуля logging."""
 
 import time
+from collections.abc import Awaitable, Callable
 
 import structlog
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
 
 logger = structlog.get_logger()
 
@@ -11,7 +14,11 @@ logger = structlog.get_logger()
 class LoggingMiddleware(BaseHTTPMiddleware):
     """Представляет сущность LoggingMiddleware."""
 
-    async def dispatch(self, request, call_next):
+    async def dispatch(
+        self,
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
         """Выполняет операцию dispatch."""
         start = time.time()
 

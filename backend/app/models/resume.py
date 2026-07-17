@@ -1,9 +1,10 @@
 """Содержит компоненты модуля resume."""
 
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from sqlalchemy import ForeignKey, String
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID as SQLAlchemyUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -30,7 +31,7 @@ class Resume(
     # )
 
     user_id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True),
+        SQLAlchemyUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -42,7 +43,7 @@ class Resume(
     )
 
     template_id: Mapped[UUID | None] = mapped_column(
-        UUID(as_uuid=True),
+        SQLAlchemyUUID(as_uuid=True),
         nullable=True,
     )
 

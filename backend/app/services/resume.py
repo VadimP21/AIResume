@@ -11,7 +11,7 @@ from app.core.exceptions import (
     ValidationException,
 )
 from app.models.resume import Resume
-from app.models.resume_section import SectionType
+from app.models.resume_section import ResumeSection, SectionType
 from app.models.resume_version import ResumeVersion
 from app.repositories.resume import ResumeRepository
 from app.repositories.resume_version import ResumeVersionRepository
@@ -41,7 +41,7 @@ class ResumeService:
         parser: "ResumeAIParser | None" = None,
         renderer: "ResumeDocumentRenderer | None" = None,
         versioning: "VersioningService | None" = None,
-    ):
+    ) -> None:
         """Инициализирует экземпляр."""
         self.repository = repository
         self.extractor = extractor
@@ -54,7 +54,7 @@ class ResumeService:
         self,
         user_id: UUID,
         data: ResumeCreateSchema,
-    ):
+    ) -> Resume | None:
         """Создаёт resume."""
         try:
             resume = await self.repository.create_resume(
@@ -76,7 +76,7 @@ class ResumeService:
         self,
         resume_id: UUID,
         user_id: UUID,
-    ):
+    ) -> Resume:
         """Возвращает resume."""
         resume = await self.repository.get_resume_with_sections(
             user_id=user_id,
@@ -93,7 +93,7 @@ class ResumeService:
         resume_id: UUID,
         user_id: UUID,
         data: ResumeUpdateSchema,
-    ):
+    ) -> Resume:
         """Обновляет resume."""
         resume = await self.repository.get_resume_base(
             resume_id,
@@ -122,7 +122,7 @@ class ResumeService:
         user_id: UUID,
         limit: int,
         offset: int,
-    ):
+    ) -> list[Resume]:
         """Возвращает list resumes."""
         return await self.repository.list_resumes(
             user_id,
@@ -135,7 +135,7 @@ class ResumeService:
         user_id: UUID,
         filename: str,
         content: bytes,
-    ):
+    ) -> Resume | None:
         """Создаёт черновик резюме из импортированного файла."""
         if self.extractor is None:
             raise ValidationException("Resume import is not configured")
@@ -153,7 +153,7 @@ class ResumeService:
         self,
         user_id: UUID,
         imported: ImportedResumeSchema,
-    ):
+    ) -> Resume | None:
         """Сохраняет структурированное импортированное резюме."""
         resume = await self.repository.create_resume(user_id, imported.title)
         for position, section in enumerate(imported.sections):
@@ -198,7 +198,7 @@ class ResumeService:
         self,
         resume_id: UUID,
         user_id: UUID,
-    ):
+    ) -> None:
         """Удаляет resume."""
         resume = await self.repository.get_resume_base(
             resume_id=resume_id,
@@ -220,7 +220,7 @@ class ResumeService:
         resume_id: UUID,
         user_id: UUID,
         data: ResumeSectionCreateSchema,
-    ):
+    ) -> ResumeSection:
         """Выполняет операцию add section."""
         try:
             position = await self.repository.get_next_position_and_lock_resume(
@@ -251,7 +251,7 @@ class ResumeService:
         section_id: UUID,
         user_id: UUID,
         data: ResumeSectionUpdateSchema,
-    ):
+    ) -> ResumeSection:
         """Обновляет section."""
         section = await self.repository.get_section(
             section_id,

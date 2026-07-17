@@ -13,6 +13,7 @@ from app.api.v1.auth.schemas import (
     UserResponse,
 )
 from app.core.config import Settings, get_settings, settings
+from app.models.user import User
 from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -28,7 +29,7 @@ async def register(
         AuthService,
         Depends(get_auth_service),
     ],
-):
+) -> User:
     """Выполняет операцию register."""
     user = await service.register(
         payload.email,
@@ -47,7 +48,7 @@ async def login(
         AuthService,
         Depends(get_auth_service),
     ],
-):
+) -> dict[str, str]:
     """Выполняет операцию login."""
     return await service.login(
         payload.email,
@@ -62,7 +63,7 @@ async def logout(
         AuthService,
         Depends(get_auth_service),
     ],
-):
+) -> dict[str, str]:
     """Выполняет операцию logout."""
     await service.logout(payload)
 
@@ -79,7 +80,7 @@ async def refresh(
         AuthService,
         Depends(get_auth_service),
     ],
-):
+) -> dict[str, str]:
     """Выполняет операцию refresh."""
     return await service.refresh_tokens(payload)
 
@@ -93,7 +94,7 @@ async def fake_auth(
         Settings,
         Depends(get_settings),
     ],
-):
+) -> dict[str, str]:
     """Выполняет операцию fake auth."""
     email, password = app_settings.get_fake_auth_credentials()
 
