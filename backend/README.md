@@ -30,6 +30,10 @@ Built with:
 - JWT authentication
 - User management
 - Resume CRUD
+- Resume sections
+- Resume versioning and restoration
+- Resume import from PDF and DOCX through a configured AI provider
+- Resume export to PDF and DOCX
 - PostgreSQL integration
 - Redis integration
 - Celery worker
@@ -152,27 +156,37 @@ Create `.env`:
 ```env
 APP_NAME=AI Resume Builder
 APP_ENV=development
-DEBUG=true
+DEBUG=false
+BACKEND_HOST=0.0.0.0
+BACKEND_PORT=8000
+LOG_LEVEL=INFO
+TIMEZONE=UTC
 ENABLE_FAKE_AUTH=false
 FAKE_AUTH_EMAIL=
 FAKE_AUTH_PASSWORD=
+API_V1_PREFIX=/api/v1
 
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_DB=resume_builder
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
+DB_POOL_SIZE=20
+DB_MAX_OVERFLOW=10
+DB_POOL_TIMEOUT=30
+DB_POOL_RECYCLE=1800
 
 REDIS_HOST=localhost
 REDIS_PORT=6379
+REDIS_PASSWORD=
 
-JWT_SECRET=CHANGE_ME
+JWT_SECRET=CHANGE_ME_AT_LEAST_32_CHARACTERS
 JWT_ALGORITHM=HS256
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
 JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
 REFRESH_TOKEN_EXPIRE_SECONDS=604800
-
-REDIS_PASSWORD=
+JWT_ISSUER=airesume-api
+JWT_AUDIENCE=airesume-client
 
 CORS_ORIGINS=["http://localhost:3000"]
 
@@ -229,7 +243,7 @@ docker compose up -d
 # Run Backend
 
 ```bash
-uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload
 ```
 
 API:
@@ -255,7 +269,7 @@ http://localhost:8000/redoc
 # Run Celery Worker
 
 ```bash
-celery -A app.tasks.worker worker -l info
+uv run celery -A app.tasks.worker worker -l info
 ```
 
 ---
@@ -265,13 +279,13 @@ celery -A app.tasks.worker worker -l info
 ## Create migration
 
 ```bash
-alembic revision --autogenerate -m "message"
+uv run alembic revision --autogenerate -m "message"
 ```
 
 ## Apply migrations
 
 ```bash
-alembic upgrade head
+uv run alembic upgrade head
 ```
 
 ---
@@ -321,8 +335,12 @@ Detailed commands: [Docker workflow](docs/workflows/docker.md).
 ```text
 POST /api/v1/auth/register
 POST /api/v1/auth/login
+POST /api/v1/auth/logout
 POST /api/v1/auth/refresh
 ```
+
+`POST /api/v1/auth/fake_auth` доступен только при `APP_ENV=development|test`,
+`ENABLE_FAKE_AUTH=true` и заданных `FAKE_AUTH_EMAIL`/`FAKE_AUTH_PASSWORD`.
 
 ## Users
 
@@ -344,6 +362,11 @@ POST   /api/v1/resumes
 GET    /api/v1/resumes/{id}
 PATCH  /api/v1/resumes/{id}
 DELETE /api/v1/resumes/{id}
+POST   /api/v1/resumes/{id}/sections
+PATCH  /api/v1/resumes/sections/{section_id}
+GET    /api/v1/resumes/{id}/versions?limit=20&offset=0
+GET    /api/v1/resumes/{id}/versions/{version_id}
+POST   /api/v1/resumes/{id}/versions/{version_id}/restore
 GET    /api/v1/resumes/{id}/export?format=pdf|docx
 POST   /api/v1/resumes/import
 ```
@@ -360,25 +383,25 @@ POST   /api/v1/resumes/import
 ## Lint
 
 ```bash
-ruff check .
+uv run ruff check .
 ```
 
 ## Format
 
 ```bash
-ruff format .
+uv run ruff format --check .
 ```
 
 ## Type checking
 
 ```bash
-mypy app
+uv run mypy app
 ```
 
 ## Tests
 
 ```bash
-pytest
+uv run pytest
 ```
 
 ---

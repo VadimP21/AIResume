@@ -9,6 +9,7 @@ from docx import Document
 from docx.shared import Pt
 
 from app.core.exceptions import ServiceUnavailableException
+from app.dto.resumes import ResumeDTO
 
 PDF_EXPORT_UNAVAILABLE_MESSAGE = "PDF export is temporarily unavailable"
 
@@ -32,7 +33,7 @@ class RenderedSection:
 class ResumeDocumentRenderer:
     """Рендерит единое представление резюме в поддерживаемые форматы."""
 
-    def render_pdf(self, resume: Any) -> bytes:
+    def render_pdf(self, resume: ResumeDTO) -> bytes:
         """Возвращает PDF-представление резюме."""
         try:
             from weasyprint import HTML  # type: ignore[import-untyped]
@@ -41,7 +42,7 @@ class ResumeDocumentRenderer:
         except OSError as exc:
             raise ServiceUnavailableException(PDF_EXPORT_UNAVAILABLE_MESSAGE) from exc
 
-    def render_docx(self, resume: Any) -> bytes:
+    def render_docx(self, resume: ResumeDTO) -> bytes:
         """Возвращает DOCX-представление резюме."""
         document = Document()
         document.styles["Normal"].font.name = "Arial"
@@ -60,7 +61,7 @@ class ResumeDocumentRenderer:
         document.save(stream)
         return stream.getvalue()
 
-    def _render_html(self, resume: Any) -> str:
+    def _render_html(self, resume: ResumeDTO) -> str:
         """Строит экранированный HTML из единого представления резюме."""
         sections = "".join(
             self._render_html_section(section)
@@ -74,11 +75,11 @@ class ResumeDocumentRenderer:
             f"<h1>{escape(str(resume.title))}</h1>{sections}</body></html>"
         )
 
-    def _build_sections(self, resume: Any) -> tuple[RenderedSection, ...]:
+    def _build_sections(self, resume: ResumeDTO) -> tuple[RenderedSection, ...]:
         """Преобразует секции резюме в единое представление по их позиции."""
         sections = sorted(
             resume.sections,
-            key=lambda section: getattr(section, "position", 0),
+            key=lambda section: section.position,
         )
         return tuple(
             rendered_section

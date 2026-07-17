@@ -22,6 +22,8 @@ def make_settings(**overrides: Any) -> Settings:
         "REDIS_HOST": "localhost",
         "REDIS_PASSWORD": "test",
         "JWT_SECRET": "test-secret-at-least-32-characters",
+        "FAKE_AUTH_EMAIL": None,
+        "FAKE_AUTH_PASSWORD": None,
     }
     values.update(overrides)
     return Settings(**values)

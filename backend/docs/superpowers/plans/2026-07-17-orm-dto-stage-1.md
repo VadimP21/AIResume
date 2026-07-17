@@ -32,7 +32,7 @@
 **Interfaces:**
 - Produces: `UNSET`, `CreateUserCommand`, `UserDTO`, `UserAuthDTO`, `SectionType`, `CreateResumeCommand`, `UpdateResumeCommand`, `CreateSectionCommand`, `UpdateSectionCommand`, `ResumeDTO`, `ResumeSectionDTO`, `ResumeVersionDTO`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 from app.dto import UNSET, UpdateResumeCommand
@@ -44,13 +44,13 @@ def test_update_command_distinguishes_unset_none_and_value() -> None:
     assert UpdateResumeCommand(title="Senior Python Developer").title == "Senior Python Developer"
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `uv run pytest tests/unit/dto/test_contracts.py -v`
 
 Expected: collection error because `app.dto` does not exist.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 # app/dto/common.py
@@ -142,7 +142,7 @@ class ResumeVersionDTO:
     created_at: datetime
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `uv run pytest tests/unit/dto/test_contracts.py -v`
 
@@ -158,7 +158,7 @@ Expected: PASS.
 - Consumes: публичные символы из `app.dto`.
 - Produces: тестируемый публичный DTO API без инфраструктурных импортов.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```python
 from dataclasses import FrozenInstanceError
@@ -177,13 +177,13 @@ def test_user_dto_is_immutable() -> None:
 Add assertions that source files under `app/dto` do not contain imports whose
 module begins with `sqlalchemy`, `fastapi`, `pydantic` or `app.models`.
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `uv run pytest tests/unit/dto/test_contracts.py -v`
 
 Expected: FAIL until DTO decorators and package exports are implemented.
 
-- [ ] **Step 3: Implement exports and frozen/slotted DTOs**
+- [x] **Step 3: Implement exports and frozen/slotted DTOs**
 
 ```python
 # app/dto/__init__.py
@@ -203,7 +203,7 @@ from app.dto.versions import ResumeVersionDTO
 
 Use only standard-library imports inside all DTO modules.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `uv run pytest tests/unit/dto/test_contracts.py -v`
 
@@ -214,19 +214,19 @@ Expected: PASS.
 **Files:**
 - Modify: `docs/superpowers/plans/2026-07-17-orm-dto-stage-1.md` — отметить выполненные шаги только после получения результатов.
 
-- [ ] **Step 1: Run static checks**
+- [x] **Step 1: Run static checks**
 
 Run: `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy app`.
 
 Expected: all commands exit with code 0.
 
-- [ ] **Step 2: Run full tests**
+- [x] **Step 2: Run full tests**
 
 Run: `uv run pytest`.
 
 Expected: all non-skipped tests pass.
 
-- [ ] **Step 3: Inspect final diff**
+- [x] **Step 3: Inspect final diff**
 
 Run: `git diff --check` and `git status --short`.
 

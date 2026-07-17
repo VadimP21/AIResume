@@ -10,7 +10,7 @@ from starlette import status
 from app.core.security import decode_token
 from app.db.redis import redis_client
 from app.db.session import get_db
-from app.models.user import User
+from app.dto.users import UserDTO
 from app.repositories.user_repository import UserRepository
 from app.services.auth_service import AuthService
 
@@ -20,7 +20,7 @@ security = HTTPBearer(auto_error=False)
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     session: AsyncSession = Depends(get_db),
-) -> User:
+) -> UserDTO:
     """Возвращает current user."""
     if credentials is None:
         raise HTTPException(
@@ -64,7 +64,12 @@ async def get_current_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User inactive",
         )
-    return user
+    return UserDTO(
+        id=user.id,
+        email=user.email,
+        is_active=user.is_active,
+        token_version=user.token_version,
+    )
 
 
 def get_auth_service(

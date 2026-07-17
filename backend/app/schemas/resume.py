@@ -6,7 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.resume_section import SectionType
+from app.dto.resumes import SectionType
 from app.schemas.section import SectionContent
 
 

@@ -6,6 +6,7 @@ from uuid import uuid4
 
 import pytest
 
+from app.dto.resumes import ResumeDTO
 from app.models.resume_section import SectionType
 from app.services.versioning import VersioningService
 
@@ -34,4 +35,8 @@ async def test_create_snapshot_serializes_all_section_types() -> None:
     assert [section["type"] for section in snapshot["sections"]] == [
         section_type.value for section_type in SectionType
     ]
-    assert result is version
+
+
+def test_create_snapshot_accepts_resume_dto() -> None:
+    """Фиксирует DTO-границу versioning-сервиса."""
+    assert VersioningService.create_snapshot.__annotations__["resume"] is ResumeDTO

@@ -13,7 +13,7 @@ from app.api.v1.auth.schemas import (
     UserResponse,
 )
 from app.core.config import Settings, get_settings, settings
-from app.models.user import User
+from app.dto.users import CreateUserCommand, UserDTO
 from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -29,11 +29,10 @@ async def register(
         AuthService,
         Depends(get_auth_service),
     ],
-) -> User:
+) -> UserDTO:
     """Выполняет операцию register."""
     user = await service.register(
-        payload.email,
-        payload.password,
+        CreateUserCommand(email=payload.email, password=payload.password),
     )
     return user
 
@@ -65,7 +64,7 @@ async def logout(
     ],
 ) -> dict[str, str]:
     """Выполняет операцию logout."""
-    await service.logout(payload)
+    await service.logout(payload.refresh_token)
 
     return {"message": "Logged out"}
 
@@ -82,7 +81,7 @@ async def refresh(
     ],
 ) -> dict[str, str]:
     """Выполняет операцию refresh."""
-    return await service.refresh_tokens(payload)
+    return await service.refresh_tokens(payload.refresh_token)
 
 
 async def fake_auth(
