@@ -1,12 +1,13 @@
 """Тесты импорта резюме в сервисе."""
 
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import ANY, AsyncMock
 from uuid import uuid4
 
 import pytest
 
 from app.core.exceptions import ServiceUnavailableException, ValidationException
+from app.dto.resumes import CreateResumeCommand, CreateSectionCommand
 from app.schemas.resume_import import ImportedResumeSchema
 from app.services.resume import ResumeService
 
@@ -41,17 +42,23 @@ async def test_import_creates_sections_in_parser_order() -> None:
     result = await service.import_resume(uuid4(), "resume.docx", b"content")
 
     assert result is resume
+    repository.create_resume.assert_awaited_once_with(
+        user_id=ANY,
+        command=CreateResumeCommand(title="Imported resume"),
+    )
     positions = [
         call.kwargs["position"] for call in repository.add_section.await_args_list
     ]
-    section_types = [
-        call.kwargs["section_type"].value
-        for call in repository.add_section.await_args_list
+    commands = [
+        call.kwargs["command"] for call in repository.add_section.await_args_list
     ]
     assert positions == [0, 1]
-    assert section_types == [
-        "summary",
-        "skills",
+    assert commands == [
+        CreateSectionCommand(
+            section_type=section.section_type,
+            content=section.content.model_dump(mode="json"),
+        )
+        for section in imported_resume().sections
     ]
     repository.session.commit.assert_awaited_once_with()
 

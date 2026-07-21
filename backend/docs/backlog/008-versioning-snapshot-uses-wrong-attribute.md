@@ -15,3 +15,9 @@
 ## Рекомендуемое решение
 
 Использовать `section.section_type.value` и покрыть создание snapshot резюме с каждой поддерживаемой секцией тестом.
+
+## Решение
+
+`VersioningService.create_snapshot()` формирует тип секции из
+`section.section_type.value`. Сценарии создания и восстановления версий покрыты
+unit- и integration-тестами.

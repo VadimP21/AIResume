@@ -1,41 +1,71 @@
 """Тесты рендеринга резюме в документы."""
 
+from datetime import UTC, datetime
+from inspect import signature
 from io import BytesIO
 from types import SimpleNamespace
+from typing import Any
+from uuid import uuid4
 
 import pytest
 from docx import Document
 
 from app.core.exceptions import ServiceUnavailableException
+from app.dto.resumes import ResumeDTO, ResumeSectionDTO, SectionType
 from app.services.resume_document import ResumeDocumentRenderer
 
+TIMESTAMP = datetime(2026, 1, 1, tzinfo=UTC)
 
-def resume() -> SimpleNamespace:
-    """Возвращает резюме для рендеринга."""
-    return SimpleNamespace(
-        title="Python Developer",
-        sections=[
-            SimpleNamespace(
-                section_type="summary",
-                content={"text": "Backend developer"},
-            ),
-            SimpleNamespace(
-                section_type="skills",
-                content={"skills": [{"name": "Python", "level": "Senior"}]},
-            ),
-        ],
+
+def resume_section(
+    position: int,
+    section_type: SectionType,
+    content: dict[str, Any],
+) -> ResumeSectionDTO:
+    """Создаёт DTO секции для рендеринга."""
+    return ResumeSectionDTO(
+        id=uuid4(),
+        resume_id=uuid4(),
+        section_type=section_type,
+        position=position,
+        content=content,
+        created_at=TIMESTAMP,
+        updated_at=TIMESTAMP,
     )
 
 
-def full_resume() -> SimpleNamespace:
+def resume() -> ResumeDTO:
+    """Возвращает резюме для рендеринга."""
+    return ResumeDTO(
+        id=uuid4(),
+        user_id=uuid4(),
+        title="Python Developer",
+        created_at=TIMESTAMP,
+        updated_at=TIMESTAMP,
+        sections=(
+            resume_section(0, SectionType.SUMMARY, {"text": "Backend developer"}),
+            resume_section(
+                1,
+                SectionType.SKILLS,
+                {"skills": [{"name": "Python", "level": "Senior"}]},
+            ),
+        ),
+    )
+
+
+def full_resume() -> ResumeDTO:
     """Возвращает резюме со всеми секциями в пользовательском порядке."""
-    return SimpleNamespace(
+    return ResumeDTO(
+        id=uuid4(),
+        user_id=uuid4(),
         title="Python <Developer>",
-        sections=[
-            SimpleNamespace(
-                position=3,
-                section_type="experience",
-                content={
+        created_at=TIMESTAMP,
+        updated_at=TIMESTAMP,
+        sections=(
+            resume_section(
+                3,
+                SectionType.EXPERIENCE,
+                {
                     "experiences": [
                         {
                             "company": "Acme & Co",
@@ -47,15 +77,11 @@ def full_resume() -> SimpleNamespace:
                     ]
                 },
             ),
-            SimpleNamespace(
-                position=1,
-                section_type="summary",
-                content={"text": "ATS-friendly summary"},
-            ),
-            SimpleNamespace(
-                position=2,
-                section_type="education",
-                content={
+            resume_section(1, SectionType.SUMMARY, {"text": "ATS-friendly summary"}),
+            resume_section(
+                2,
+                SectionType.EDUCATION,
+                {
                     "education": [
                         {
                             "institution": "State University",
@@ -67,15 +93,15 @@ def full_resume() -> SimpleNamespace:
                     ]
                 },
             ),
-            SimpleNamespace(
-                position=4,
-                section_type="skills",
-                content={"skills": [{"name": "Python", "level": "Senior"}]},
+            resume_section(
+                4,
+                SectionType.SKILLS,
+                {"skills": [{"name": "Python", "level": "Senior"}]},
             ),
-            SimpleNamespace(
-                position=5,
-                section_type="projects",
-                content={
+            resume_section(
+                5,
+                SectionType.PROJECTS,
+                {
                     "projects": [
                         {
                             "name": "AI Resume",
@@ -85,12 +111,12 @@ def full_resume() -> SimpleNamespace:
                     ]
                 },
             ),
-            SimpleNamespace(
-                position=6,
-                section_type="languages",
-                content={"languages": [{"name": "English", "level": "C1"}]},
+            resume_section(
+                6,
+                SectionType.LANGUAGES,
+                {"languages": [{"name": "English", "level": "C1"}]},
             ),
-        ],
+        ),
     )
 
 
@@ -103,6 +129,14 @@ def test_renders_docx_with_resume_content() -> None:
     assert "Python Developer" in text
     assert "Backend developer" in text
     assert "Python" in text
+
+
+def test_renderer_public_methods_accept_resume_dto() -> None:
+    """Принимает DTO резюме на публичной границе рендерера."""
+    renderer = ResumeDocumentRenderer()
+
+    assert signature(renderer.render_docx).parameters["resume"].annotation is ResumeDTO
+    assert signature(renderer.render_pdf).parameters["resume"].annotation is ResumeDTO
 
 
 def test_renders_all_sections_in_position_order_for_docx() -> None:

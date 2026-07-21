@@ -2,7 +2,7 @@
 
 import asyncio
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 from uuid import UUID
 
 from app.core.exceptions import (
@@ -10,16 +10,20 @@ from app.core.exceptions import (
     ServiceUnavailableException,
     ValidationException,
 )
-from app.models.resume import Resume
-from app.models.resume_section import ResumeSection, SectionType
-from app.models.resume_version import ResumeVersion
+from app.dto.resumes import (
+    CreateResumeCommand,
+    CreateSectionCommand,
+    ResumeDTO,
+    ResumeSectionDTO,
+    SectionType,
+    UpdateResumeCommand,
+    UpdateSectionCommand,
+)
+from app.dto.versions import ResumeVersionDTO
 from app.repositories.resume import ResumeRepository
 from app.repositories.resume_version import ResumeVersionRepository
 from app.schemas.resume import (
     ResumeCreateSchema,
-    ResumeSectionCreateSchema,
-    ResumeSectionUpdateSchema,
-    ResumeUpdateSchema,
 )
 from app.schemas.resume_import import ImportedResumeSchema
 from app.services.resume_ai_parser import RESUME_IMPORT_UNAVAILABLE_MESSAGE
@@ -54,12 +58,12 @@ class ResumeService:
         self,
         user_id: UUID,
         data: ResumeCreateSchema,
-    ) -> Resume | None:
+    ) -> ResumeDTO | None:
         """Создаёт resume."""
         try:
             resume = await self.repository.create_resume(
                 user_id=user_id,
-                title=data.title,
+                command=CreateResumeCommand(title=data.title),
             )
             resume_id = resume.id
             await self._create_snapshot(resume)
@@ -76,7 +80,7 @@ class ResumeService:
         self,
         resume_id: UUID,
         user_id: UUID,
-    ) -> Resume:
+    ) -> ResumeDTO:
         """Возвращает resume."""
         resume = await self.repository.get_resume_with_sections(
             user_id=user_id,
@@ -92,26 +96,21 @@ class ResumeService:
         self,
         resume_id: UUID,
         user_id: UUID,
-        data: ResumeUpdateSchema,
-    ) -> Resume:
+        command: UpdateResumeCommand,
+    ) -> ResumeDTO:
         """Обновляет resume."""
-        resume = await self.repository.get_resume_base(
-            resume_id,
-            user_id,
-        )
-
-        if not resume:
+        resume = await self.repository.update_resume(resume_id, user_id, command)
+        if resume is None:
             raise NotFoundException("Resume not found")
         try:
-            resume = await self.repository.update_resume(
-                resume=resume,
-                title=data.title,
-            )
             await self._create_snapshot_by_id(resume_id, user_id)
             await self.repository.session.commit()
-            await self.repository.session.refresh(resume)
-
-            return resume
+            updated_resume = await self.repository.get_resume_with_sections(
+                resume_id, user_id
+            )
+            if updated_resume is None:
+                raise NotFoundException("Resume not found")
+            return updated_resume
 
         except Exception:
             await self.repository.session.rollback()
@@ -122,7 +121,7 @@ class ResumeService:
         user_id: UUID,
         limit: int,
         offset: int,
-    ) -> list[Resume]:
+    ) -> list[ResumeDTO]:
         """Возвращает list resumes."""
         return await self.repository.list_resumes(
             user_id,
@@ -135,7 +134,7 @@ class ResumeService:
         user_id: UUID,
         filename: str,
         content: bytes,
-    ) -> Resume | None:
+    ) -> ResumeDTO | None:
         """Создаёт черновик резюме из импортированного файла."""
         if self.extractor is None:
             raise ValidationException("Resume import is not configured")
@@ -153,15 +152,20 @@ class ResumeService:
         self,
         user_id: UUID,
         imported: ImportedResumeSchema,
-    ) -> Resume | None:
+    ) -> ResumeDTO | None:
         """Сохраняет структурированное импортированное резюме."""
-        resume = await self.repository.create_resume(user_id, imported.title)
+        resume = await self.repository.create_resume(
+            user_id=user_id,
+            command=CreateResumeCommand(title=imported.title),
+        )
         for position, section in enumerate(imported.sections):
             await self.repository.add_section(
                 resume_id=resume.id,
-                section_type=section.section_type,
-                content=section.content.model_dump(mode="json"),
                 position=position,
+                command=CreateSectionCommand(
+                    section_type=section.section_type,
+                    content=section.content.model_dump(mode="json"),
+                ),
             )
         await self._create_snapshot_by_id(resume.id, user_id)
         await self.repository.session.commit()
@@ -200,15 +204,10 @@ class ResumeService:
         user_id: UUID,
     ) -> None:
         """Удаляет resume."""
-        resume = await self.repository.get_resume_base(
-            resume_id=resume_id,
-            user_id=user_id,
-        )
-        if not resume:
-            raise NotFoundException("Resume not found")
-
         try:
-            await self.repository.session.delete(resume)
+            deleted = await self.repository.delete_resume(resume_id, user_id)
+            if not deleted:
+                raise NotFoundException("Resume not found")
             await self.repository.session.flush()
             await self.repository.session.commit()
         except Exception:
@@ -219,8 +218,8 @@ class ResumeService:
         self,
         resume_id: UUID,
         user_id: UUID,
-        data: ResumeSectionCreateSchema,
-    ) -> ResumeSection:
+        command: CreateSectionCommand,
+    ) -> ResumeSectionDTO:
         """Выполняет операцию add section."""
         try:
             position = await self.repository.get_next_position_and_lock_resume(
@@ -233,13 +232,11 @@ class ResumeService:
 
             section = await self.repository.add_section(
                 resume_id=resume_id,
-                section_type=data.section.section_type,
-                content=data.section.content.model_dump(mode="json"),
                 position=position,
+                command=command,
             )
             await self._create_snapshot_by_id(resume_id, user_id)
             await self.repository.session.commit()
-            await self.repository.session.refresh(section)
             return section
 
         except Exception:
@@ -250,25 +247,19 @@ class ResumeService:
         self,
         section_id: UUID,
         user_id: UUID,
-        data: ResumeSectionUpdateSchema,
-    ) -> ResumeSection:
+        command: UpdateSectionCommand,
+    ) -> ResumeSectionDTO:
         """Обновляет section."""
-        section = await self.repository.get_section(
+        section = await self.repository.update_section(
             section_id,
             user_id,
+            command,
         )
-
-        if not section:
+        if section is None:
             raise NotFoundException("Section not found")
         try:
-            section = await self.repository.update_section(
-                section,
-                data.content,
-            )
             await self._create_snapshot_by_id(section.resume_id, user_id)
             await self.repository.session.commit()
-            await self.repository.session.refresh(section)
-
             return section
 
         except Exception:
@@ -281,7 +272,7 @@ class ResumeService:
         user_id: UUID,
         limit: int,
         offset: int,
-    ) -> list[ResumeVersion]:
+    ) -> list[ResumeVersionDTO]:
         """Возвращает историю версий резюме владельца."""
         await self._get_resume_for_snapshot(resume_id, user_id)
         return await self.version_repository.list_versions(resume_id, limit, offset)
@@ -291,7 +282,7 @@ class ResumeService:
         resume_id: UUID,
         version_id: UUID,
         user_id: UUID,
-    ) -> ResumeVersion:
+    ) -> ResumeVersionDTO:
         """Возвращает версию резюме владельца."""
         await self._get_resume_for_snapshot(resume_id, user_id)
         version = await self.version_repository.get_version(resume_id, version_id)
@@ -304,27 +295,36 @@ class ResumeService:
         resume_id: UUID,
         version_id: UUID,
         user_id: UUID,
-    ) -> Resume:
+    ) -> ResumeDTO:
         """Восстанавливает резюме из сохранённой версии."""
-        resume = await self._get_resume_for_snapshot(resume_id, user_id)
+        resume = await self.get_resume(resume_id, user_id)
         version = await self.version_repository.get_version(resume_id, version_id)
         if version is None:
             raise NotFoundException("Resume version not found")
 
         try:
             await self._create_snapshot(resume)
-            snapshot_resume = version.snapshot["resume"]
-            await self.repository.update_resume(resume, snapshot_resume["title"])
-            await self.repository.delete_sections(resume.id)
-            for section in version.snapshot["sections"]:
-                await self.repository.add_section(
-                    resume_id=resume.id,
-                    section_type=SectionType(section["type"]),
-                    content=section["content"],
-                    position=section["position"],
-                )
+            snapshot = cast(dict[str, Any], version.snapshot)
+            snapshot_resume = cast(dict[str, Any], snapshot["resume"])
+            restored_resume = await self.repository.restore_resume(
+                resume_id=resume.id,
+                user_id=user_id,
+                command=UpdateResumeCommand(title=snapshot_resume["title"]),
+                sections=tuple(
+                    (
+                        section["position"],
+                        CreateSectionCommand(
+                            section_type=SectionType(section["type"]),
+                            content=section["content"],
+                        ),
+                    )
+                    for section in cast(list[dict[str, Any]], snapshot["sections"])
+                ),
+            )
+            if restored_resume is None:
+                raise NotFoundException("Resume not found")
             await self.repository.session.commit()
-            return await self._get_resume_for_snapshot(resume_id, user_id)
+            return restored_resume
         except Exception:
             await self.repository.session.rollback()
             raise
@@ -333,14 +333,11 @@ class ResumeService:
         self,
         resume_id: UUID,
         user_id: UUID,
-    ) -> Resume:
+    ) -> ResumeDTO:
         """Возвращает резюме владельца с загруженными секциями."""
-        resume = await self.repository.get_resume_with_sections(resume_id, user_id)
-        if resume is None:
-            raise NotFoundException("Resume not found")
-        return resume
+        return await self.get_resume(resume_id, user_id)
 
-    async def _create_snapshot(self, resume: Resume) -> None:
+    async def _create_snapshot(self, resume: ResumeDTO) -> None:
         """Создаёт снимок резюме при включённом версионировании."""
         if self.versioning is not None:
             await self.versioning.create_snapshot(resume)

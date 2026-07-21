@@ -8,7 +8,6 @@ from jose import JWTError
 from redis.asyncio import Redis
 from sqlalchemy.exc import IntegrityError
 
-from app.api.v1.auth.schemas import RefreshRequest
 from app.core.config import settings
 from app.core.security import (
     create_access_token,
@@ -18,7 +17,7 @@ from app.core.security import (
     hash_token,
     verify_password,
 )
-from app.models.user import User
+from app.dto.users import CreateUserCommand, UserDTO
 from app.repositories.user_repository import UserRepository
 
 CONSUME_REFRESH_TOKEN_SCRIPT = """
@@ -58,15 +57,14 @@ class AuthService:
 
     async def register(
         self,
-        email: str,
-        password: str,
-    ) -> User:
+        command: CreateUserCommand,
+    ) -> UserDTO:
         """Выполняет операцию register."""
         try:
-            email = email.lower().strip()
+            email = command.email.lower().strip()
             user = await self.user_repo.create(
                 email=email,
-                hashed_password=hash_password(password),
+                hashed_password=hash_password(command.password),
             )
             await self.user_repo.session.commit()
 
@@ -103,7 +101,7 @@ class AuthService:
             )
         if not verify_password(
             password,
-            user.hashed_password,
+            user.password_hash,
         ):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -135,10 +133,10 @@ class AuthService:
 
     async def logout(
         self,
-        payload: RefreshRequest,
+        refresh_token: str,
     ) -> None:
         """Выполняет операцию logout."""
-        token_payload = decode_token(payload.refresh_token)
+        token_payload = decode_token(refresh_token)
         user_id = token_payload["sub"]
         user = await self.user_repo.get_by_id(UUID(user_id))
         if not user:
@@ -176,11 +174,11 @@ class AuthService:
 
     async def refresh_tokens(
         self,
-        payload_data: RefreshRequest,
+        refresh_token: str,
     ) -> dict[str, str]:
         """Выполняет операцию refresh tokens."""
         try:
-            payload = decode_token(payload_data.refresh_token)
+            payload = decode_token(refresh_token)
 
         except JWTError:
             raise HTTPException(
@@ -206,7 +204,7 @@ class AuthService:
             )
 
         if not verify_password(
-            payload_data.refresh_token,
+            refresh_token,
             stored_hash,
         ):
             raise HTTPException(
@@ -271,10 +269,7 @@ class AuthService:
                 password,
             )
 
-        await self.register(
-            email,
-            password,
-        )
+        await self.register(CreateUserCommand(email=email, password=password))
 
         return await self.login(
             email,

@@ -1,7 +1,7 @@
 """Содержит компоненты модуля versioning."""
 
-from app.models.resume import Resume
-from app.models.resume_version import ResumeVersion
+from app.dto.resumes import ResumeDTO
+from app.dto.versions import ResumeVersionDTO
 from app.repositories.resume_version import (
     ResumeVersionRepository,
 )
@@ -19,8 +19,8 @@ class VersioningService:
 
     async def create_snapshot(
         self,
-        resume: Resume,
-    ) -> ResumeVersion:
+        resume: ResumeDTO,
+    ) -> ResumeVersionDTO:
         """Создаёт snapshot."""
         snapshot = {
             "resume": {

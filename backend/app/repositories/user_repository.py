@@ -5,7 +5,9 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.dto.users import UserAuthDTO, UserDTO
 from app.models.user import User
+from app.repositories.mappers.users import user_to_auth_dto, user_to_dto
 
 
 class UserRepository:
@@ -18,31 +20,33 @@ class UserRepository:
     async def get_by_id(
         self,
         user_id: UUID,
-    ) -> User | None:
+    ) -> UserAuthDTO | None:
         """Возвращает by id."""
         stmt = select(User).where(User.id == user_id)
 
         result = await self.session.execute(stmt)
 
-        return result.scalar_one_or_none()
+        user = result.scalar_one_or_none()
+        return user_to_auth_dto(user) if user is not None else None
 
     async def get_by_email(
         self,
         email: str,
-    ) -> User | None:
+    ) -> UserAuthDTO | None:
         """Возвращает by email."""
         stmt = select(User).where(User.email == email)
 
         result = await self.session.execute(stmt)
 
-        return result.scalar_one_or_none()
+        user = result.scalar_one_or_none()
+        return user_to_auth_dto(user) if user is not None else None
 
     async def create(
         self,
         *,
         email: str,
         hashed_password: str,
-    ) -> User:
+    ) -> UserDTO:
         """Выполняет операцию create."""
         user = User(
             email=email,
@@ -54,4 +58,4 @@ class UserRepository:
         await self.session.flush()
         await self.session.refresh(user)
 
-        return user
+        return user_to_dto(user)

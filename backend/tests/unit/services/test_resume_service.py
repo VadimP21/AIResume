@@ -1,11 +1,19 @@
 """Содержит компоненты модуля test_resume_service."""
 
+from datetime import UTC, datetime
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import ANY, AsyncMock
 from uuid import uuid4
 
 import pytest
 
+from app.dto.resumes import (
+    CreateResumeCommand,
+    CreateSectionCommand,
+    ResumeDTO,
+    SectionType,
+    UpdateResumeCommand,
+)
 from app.services.resume import ResumeService
 
 
@@ -18,7 +26,7 @@ def make_repository(resume: object) -> SimpleNamespace:
         rollback=AsyncMock(),
     )
     return SimpleNamespace(
-        get_resume_base=AsyncMock(return_value=resume),
+        delete_resume=AsyncMock(return_value=resume is not None),
         session=session,
     )
 
@@ -34,11 +42,7 @@ async def test_delete_resume_commits_transaction() -> None:
 
     await service.delete_resume(resume_id, user_id)
 
-    repository.get_resume_base.assert_awaited_once_with(
-        resume_id=resume_id,
-        user_id=user_id,
-    )
-    repository.session.delete.assert_awaited_once_with(resume)
+    repository.delete_resume.assert_awaited_once_with(resume_id, user_id)
     repository.session.flush.assert_awaited_once_with()
     repository.session.commit.assert_awaited_once_with()
     repository.session.rollback.assert_not_awaited()
@@ -61,7 +65,15 @@ async def test_delete_resume_rolls_back_when_commit_fails() -> None:
 @pytest.mark.asyncio
 async def test_create_resume_creates_snapshot_in_same_transaction() -> None:
     """Проверяет создание snapshot вместе с резюме."""
-    resume = SimpleNamespace(id=uuid4(), sections=[])
+    now = datetime.now(UTC)
+    resume = ResumeDTO(
+        id=uuid4(),
+        user_id=uuid4(),
+        title="Resume",
+        created_at=now,
+        updated_at=now,
+        sections=(),
+    )
     repository = SimpleNamespace(
         create_resume=AsyncMock(return_value=resume),
         get_resume_with_sections=AsyncMock(return_value=resume),
@@ -72,6 +84,10 @@ async def test_create_resume_creates_snapshot_in_same_transaction() -> None:
 
     await service.create_resume(uuid4(), SimpleNamespace(title="Resume"))
 
+    repository.create_resume.assert_awaited_once_with(
+        user_id=ANY,
+        command=CreateResumeCommand(title="Resume"),
+    )
     versioning.create_snapshot.assert_awaited_once_with(resume)
     repository.session.commit.assert_awaited_once_with()
 
@@ -82,7 +98,15 @@ async def test_restore_version_saves_current_state_before_replacing_sections() -
     resume_id = uuid4()
     version_id = uuid4()
     user_id = uuid4()
-    resume = SimpleNamespace(id=resume_id, title="Current", sections=[])
+    now = datetime.now(UTC)
+    resume = ResumeDTO(
+        id=resume_id,
+        user_id=user_id,
+        title="Current",
+        created_at=now,
+        updated_at=now,
+        sections=(),
+    )
     version = SimpleNamespace(
         snapshot={
             "resume": {"id": str(resume_id), "title": "Previous"},
@@ -98,9 +122,7 @@ async def test_restore_version_saves_current_state_before_replacing_sections() -
     )
     repository = SimpleNamespace(
         get_resume_with_sections=AsyncMock(return_value=resume),
-        update_resume=AsyncMock(),
-        delete_sections=AsyncMock(),
-        add_section=AsyncMock(),
+        restore_resume=AsyncMock(return_value=resume),
         session=SimpleNamespace(commit=AsyncMock(), rollback=AsyncMock()),
     )
     versioning = SimpleNamespace(create_snapshot=AsyncMock())
@@ -113,6 +135,18 @@ async def test_restore_version_saves_current_state_before_replacing_sections() -
 
     assert result is resume
     versioning.create_snapshot.assert_awaited_once_with(resume)
-    repository.delete_sections.assert_awaited_once_with(resume_id)
-    repository.add_section.assert_awaited_once()
+    repository.restore_resume.assert_awaited_once_with(
+        resume_id=resume_id,
+        user_id=user_id,
+        command=UpdateResumeCommand(title="Previous"),
+        sections=(
+            (
+                1,
+                CreateSectionCommand(
+                    section_type=SectionType.SUMMARY,
+                    content={"text": "Restored"},
+                ),
+            ),
+        ),
+    )
     repository.session.commit.assert_awaited_once_with()

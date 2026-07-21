@@ -42,7 +42,7 @@ async def test_deleted_resume_is_absent_in_new_session(
 
         async with session_factory() as verification_session:
             repository = ResumeRepository(verification_session)
-            deleted_resume = await repository.get_resume_base(
+            deleted_resume = await repository.get_resume_with_sections(
                 resume_id=resume_id,
                 user_id=user_id,
             )

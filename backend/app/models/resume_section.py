@@ -1,6 +1,5 @@
 """Содержит компоненты модуля resume_section."""
 
-from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
@@ -13,20 +12,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.mixins import TimestampMixin, UUIDMixin
+from app.dto.resumes import SectionType
 
 if TYPE_CHECKING:
     from app.models.resume import Resume
-
-
-class SectionType(StrEnum):
-    """Представляет сущность SectionType."""
-
-    SUMMARY = "summary"
-    EXPERIENCE = "experience"
-    EDUCATION = "education"
-    SKILLS = "skills"
-    PROJECTS = "projects"
-    LANGUAGES = "languages"
 
 
 class ResumeSection(

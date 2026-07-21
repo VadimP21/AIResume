@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from app.api.v1.auth import dependencies
 from app.core.security import create_access_token, create_refresh_token
 from app.db.session import get_db
+from app.dto import UserDTO
 
 
 @pytest.fixture
@@ -20,6 +21,7 @@ def protected_client(
     """Выполняет операцию protected client."""
     user = SimpleNamespace(
         id=uuid4(),
+        email="user@example.com",
         token_version=1,
         is_active=True,
     )
@@ -67,6 +69,22 @@ def test_protected_endpoint_accepts_access_token(
 
     assert response.status_code == 200
     assert response.json() == {"user_id": str(user.id)}
+
+
+@pytest.mark.asyncio
+async def test_current_user_returns_safe_dto(
+    protected_client: tuple[TestClient, SimpleNamespace],
+) -> None:
+    """Возвращает безопасный DTO вместо ORM-пользователя."""
+    _, user = protected_client
+    token = create_access_token(str(user.id), user.token_version)
+
+    result = await dependencies.get_current_user(
+        credentials=SimpleNamespace(credentials=token),
+        session=object(),
+    )
+
+    assert isinstance(result, UserDTO)
 
 
 def test_protected_endpoint_rejects_refresh_token(

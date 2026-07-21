@@ -17,9 +17,9 @@ Current responsibilities:
 - User authentication
 - Resume CRUD
 - Resume sections
-- Resume rendering (planned)
-- Resume versioning (planned)
-- AI integration (planned)
+- Resume rendering and export to PDF/DOCX
+- Resume versioning and restoration
+- AI-assisted import from PDF/DOCX
 
 ---
 
@@ -96,6 +96,9 @@ app/
     services/
 
     repositories/
+        mappers/
+
+    dto/
 
     models/
 
@@ -108,6 +111,8 @@ app/
     core/
 
     tasks/
+
+    api/v1/templates/
 
 static/
 
@@ -128,6 +133,15 @@ Database
 ---
 
 # Layer Responsibilities
+
+## ORM Isolation
+
+SQLAlchemy ORM models are infrastructure details. They may only be used inside
+repositories, `app/models`, database infrastructure and migrations.
+
+Routers and services must use DTOs, commands, identifiers and primitives. They
+must not import ORM models, return them or expose them in public method
+annotations.
 
 ## Router
 

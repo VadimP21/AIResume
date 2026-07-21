@@ -6,6 +6,7 @@ from uuid import uuid4
 
 import pytest
 
+from app.dto.resumes import CreateSectionCommand
 from app.models.resume_section import SectionType
 from app.schemas.resume import ResumeSectionCreateSchema
 from app.schemas.section import SummaryContent, SummarySection
@@ -43,14 +44,22 @@ async def test_add_section_uses_first_position() -> None:
     resume_id = uuid4()
     user_id = uuid4()
 
-    section = await service.add_section(resume_id, user_id, make_data())
+    section = await service.add_section(
+        resume_id,
+        user_id,
+        CreateSectionCommand(
+            section_type=SectionType.SUMMARY, content={"text": "Summary"}
+        ),
+    )
 
     assert section is repository.add_section.return_value
     repository.add_section.assert_awaited_once_with(
         resume_id=resume_id,
-        section_type=SectionType.SUMMARY,
-        content={"text": "Summary"},
         position=1,
+        command=CreateSectionCommand(
+            section_type=SectionType.SUMMARY,
+            content={"text": "Summary"},
+        ),
     )
     repository.session.commit.assert_awaited_once_with()
 

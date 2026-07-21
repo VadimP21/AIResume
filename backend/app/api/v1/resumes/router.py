@@ -12,10 +12,16 @@ from app.api.v1.resumes.dependencies import (
     get_resume_service,
 )
 from app.core.config import settings
-from app.models.resume import Resume
-from app.models.resume_section import ResumeSection
-from app.models.resume_version import ResumeVersion
-from app.models.user import User
+from app.dto.common import UNSET
+from app.dto.resumes import (
+    CreateSectionCommand,
+    ResumeDTO,
+    ResumeSectionDTO,
+    UpdateResumeCommand,
+    UpdateSectionCommand,
+)
+from app.dto.users import UserDTO
+from app.dto.versions import ResumeVersionDTO
 from app.schemas.resume import (
     ResumeCreateSchema,
     ResumeResponseSchema,
@@ -47,8 +53,8 @@ EXPORT_MEDIA_TYPES = {
 async def import_resume(
     file: Annotated[UploadFile, File()],
     service: Annotated[ResumeService, Depends(get_resume_service)],
-    current_user: User = Depends(get_current_user),
-) -> Resume | None:
+    current_user: UserDTO = Depends(get_current_user),
+) -> ResumeDTO | None:
     """Импортирует новое резюме из PDF или DOCX."""
     content = await file.read(settings.RESUME_IMPORT_MAX_FILE_SIZE + 1)
     return await service.import_resume(
@@ -62,7 +68,7 @@ async def import_resume(
 async def export_resume(
     resume_id: UUID,
     format: Literal["pdf", "docx"],
-    current_user: User = Depends(get_current_user),
+    current_user: UserDTO = Depends(get_current_user),
     service: ResumeService = Depends(get_resume_service),
 ) -> Response:
     """Экспортирует резюме текущего пользователя."""
@@ -86,8 +92,8 @@ async def export_resume(
 async def create_resume(
     data: ResumeCreateSchema,
     service: Annotated[ResumeService, Depends(get_resume_service)],
-    current_user: User = Depends(get_current_user),
-) -> Resume | None:
+    current_user: UserDTO = Depends(get_current_user),
+) -> ResumeDTO | None:
     """Создаёт resume."""
     return await service.create_resume(
         user_id=current_user.id,
@@ -102,9 +108,9 @@ async def create_resume(
 )
 async def get_resume(
     resume_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: UserDTO = Depends(get_current_user),
     service: ResumeService = Depends(get_resume_service),
-) -> Resume:
+) -> ResumeDTO:
     """Возвращает resume."""
     return await service.get_resume(resume_id, current_user.id)
 
@@ -115,11 +121,11 @@ async def get_resume(
 )
 async def list_versions(
     resume_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: UserDTO = Depends(get_current_user),
     service: ResumeService = Depends(get_resume_service),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
-) -> list[ResumeVersion]:
+) -> list[ResumeVersionDTO]:
     """Возвращает историю версий резюме владельца."""
     return await service.list_versions(resume_id, current_user.id, limit, offset)
 
@@ -131,9 +137,9 @@ async def list_versions(
 async def get_version(
     resume_id: UUID,
     version_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: UserDTO = Depends(get_current_user),
     service: ResumeService = Depends(get_resume_service),
-) -> ResumeVersion:
+) -> ResumeVersionDTO:
     """Возвращает полное содержимое версии резюме владельца."""
     return await service.get_version(resume_id, version_id, current_user.id)
 
@@ -145,9 +151,9 @@ async def get_version(
 async def restore_version(
     resume_id: UUID,
     version_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: UserDTO = Depends(get_current_user),
     service: ResumeService = Depends(get_resume_service),
-) -> Resume:
+) -> ResumeDTO:
     """Восстанавливает резюме из версии владельца."""
     return await service.restore_version(resume_id, version_id, current_user.id)
 
@@ -159,14 +165,15 @@ async def restore_version(
 async def update_resume(
     resume_id: UUID,
     data: ResumeUpdateSchema,
-    current_user: User = Depends(get_current_user),
+    current_user: UserDTO = Depends(get_current_user),
     service: ResumeService = Depends(get_resume_service),
-) -> Resume:
+) -> ResumeDTO:
     """Обновляет resume."""
+    title = data.title if "title" in data.model_fields_set else UNSET
     return await service.update_resume(
         resume_id,
         current_user.id,
-        data,
+        UpdateResumeCommand(title=title),
     )
 
 
@@ -176,7 +183,7 @@ async def update_resume(
 )
 async def delete_resume(
     resume_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: UserDTO = Depends(get_current_user),
     service: ResumeService = Depends(get_resume_service),
 ) -> None:
     """Удаляет resume."""
@@ -191,14 +198,17 @@ async def delete_resume(
 async def add_section(
     resume_id: UUID,
     data: ResumeSectionCreateSchema,
-    current_user: User = Depends(get_current_user),
+    current_user: UserDTO = Depends(get_current_user),
     service: ResumeService = Depends(get_resume_service),
-) -> ResumeSection:
+) -> ResumeSectionDTO:
     """Выполняет операцию add section."""
     return await service.add_section(
         resume_id=resume_id,
         user_id=current_user.id,
-        data=data,
+        command=CreateSectionCommand(
+            section_type=data.section.section_type,
+            content=data.section.content.model_dump(mode="json"),
+        ),
     )
 
 
@@ -209,14 +219,14 @@ async def add_section(
 async def update_section(
     section_id: UUID,
     data: ResumeSectionUpdateSchema,
-    current_user: User = Depends(get_current_user),
+    current_user: UserDTO = Depends(get_current_user),
     service: ResumeService = Depends(get_resume_service),
-) -> ResumeSection:
+) -> ResumeSectionDTO:
     """Обновляет section."""
     return await service.update_section(
         section_id,
         current_user.id,
-        data,
+        UpdateSectionCommand(content=data.content),
     )
 
 
@@ -226,10 +236,10 @@ async def update_section(
     status_code=status.HTTP_200_OK,
 )
 async def list_resumes(
-    current_user: User = Depends(get_current_user),
+    current_user: UserDTO = Depends(get_current_user),
     service: ResumeService = Depends(get_resume_service),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
-) -> list[Resume]:
+) -> list[ResumeDTO]:
     """Выполняет операцию list resumes."""
     return await service.get_list_resumes(current_user.id, limit, offset)

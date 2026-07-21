@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
-from app.models.resume_section import SectionType
+from app.dto.resumes import SectionType
 
 
 class SummaryContent(BaseModel):
